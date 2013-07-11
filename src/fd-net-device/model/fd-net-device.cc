@@ -167,9 +167,9 @@ FdNetDevice::GetTypeId (void)
 FdNetDevice::FdNetDevice ()
   : m_startEvent (),
     m_stopEvent (),
+    m_mtu (1500), // Defaults to Ethernet v2 MTU
     m_node (0),
     m_ifIndex (0),
-    m_mtu (1500), // Defaults to Ethernet v2 MTU
     m_fd (-1),
     m_fdReader (0),
     m_isBroadcast (true),
@@ -497,11 +497,13 @@ FdNetDevice::SendFrom (Ptr<Packet> packet, const Address& src, const Address& de
   NS_LOG_FUNCTION (this << packet << src << dest << protocolNumber);
   NS_LOG_LOGIC ("packet: " << packet << " UID: " << packet->GetUid ());
 
+    /*
   if (IsLinkUp () == false)
     {
       m_macTxDropTrace (packet);
       return false;
-    }
+    }*/
+
 
   Mac48Address destination = Mac48Address::ConvertFrom (dest);
   Mac48Address source = Mac48Address::ConvertFrom (src);
