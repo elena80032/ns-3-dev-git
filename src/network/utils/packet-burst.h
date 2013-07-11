@@ -69,6 +69,14 @@ public:
    * \return iterator to the burst list start
    */
   std::list<Ptr<Packet> >::const_iterator Begin (void) const;
+
+  enum OwnerType {
+    BURST,
+    USER
+  };
+
+  void SetPacketsOwner(OwnerType);
+
   /**
    * \brief Returns an iterator to the end of the burst
    * \return iterator to the burst list end
@@ -82,11 +90,13 @@ public:
    */
   typedef void (* TracedCallback)(const Ptr<const PacketBurst> burst);
 
-  
 private:
   void DoDispose (void);
+
   std::list<Ptr<Packet> > m_packets; //!< the list of packets in the burst
+  OwnerType m_owner;
 };
+
 } // namespace ns3
 
 #endif /* PACKET_BURST */

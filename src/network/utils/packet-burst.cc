@@ -43,17 +43,20 @@ PacketBurst::GetTypeId (void)
 PacketBurst::PacketBurst (void)
 {
   NS_LOG_FUNCTION (this);
+  m_owner = BURST;
 }
 
 PacketBurst::~PacketBurst (void)
 {
   NS_LOG_FUNCTION (this);
-  for (std::list<Ptr<Packet> >::const_iterator iter = m_packets.begin (); iter
-       != m_packets.end (); ++iter)
-    {
-      (*iter)->Unref ();
-
-    }
+  if (m_owner == BURST)
+  {
+    for (std::list<Ptr<Packet> >::const_iterator iter = m_packets.begin (); iter
+         != m_packets.end (); ++iter)
+      {
+        (*iter)->Unref ();
+      }
+  }
 }
 
 void
@@ -63,10 +66,18 @@ PacketBurst::DoDispose (void)
   m_packets.clear ();
 }
 
+void
+PacketBurst::SetPacketsOwner (OwnerType owner)
+{
+	NS_LOG_FUNCTION(this);
+	m_owner = owner;
+}
+
 Ptr<PacketBurst> PacketBurst::Copy (void) const
 {
   NS_LOG_FUNCTION (this);
   Ptr<PacketBurst> burst = Create<PacketBurst> ();
+  burst->SetPacketsOwner (m_owner);
 
   for (std::list<Ptr<Packet> >::const_iterator iter = m_packets.begin (); iter
        != m_packets.end (); ++iter)
