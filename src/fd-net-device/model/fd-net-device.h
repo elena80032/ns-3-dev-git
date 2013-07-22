@@ -188,6 +188,14 @@ protected:
   bool m_linkUp;
 
   /**
+    * \internal
+    *
+    * Flag indicating if the ReceiveCallback method should free the
+    * buffer or not.
+    */
+  bool m_freeBufferInRCallback;
+
+  /**
    * \internal
    *
    * The typ of encapsulation of the received/transmited frames.
@@ -200,6 +208,37 @@ protected:
    * The MTU associated to the file descriptor technology
    */
   uint16_t m_mtu;
+
+  /**
+   * \internal
+   *
+   * Number of packets that were received and scheduled for read but not yeat read.
+   */
+  uint32_t m_pendingReadCount;
+
+  /**
+   * \internal
+   *
+   * Maximum number of packets that can be received and scheduled for read but not yeat read.
+   */
+  uint32_t m_maxPendingReads;
+
+
+  /**
+   * \internal
+   *
+   * Mutex to increase pending read counter.
+   */
+  SystemMutex m_pendingReadMutex;
+
+  /**
+   * \internal
+   *
+   * a copy of the node id so the read thread doesn't have to GetNode() in
+   * in order to find the node ID.  Thread unsafe reference counting in
+   * multithreaded apps is not a good thing.
+   */
+  uint32_t m_nodeId;
 
   /**
    * The trace source fired when packets coming into the "top" of the device
@@ -257,123 +296,15 @@ protected:
    */
   TracedCallback<Ptr<const Packet> > m_promiscSnifferTrace;
 
-private:
-  // private copy constructor as sugested in:
-  // http://www.nsnam.org/wiki/NS-3_Python_Bindings#.22invalid_use_of_incomplete_type.22
-  FdNetDevice (FdNetDevice const &);
-
-  /**
-   * Spin up the device
-   */
-  void StartDevice (void);
-
-  /**
-   * Tear down the device
-   */
-  void StopDevice (void);
-
-  /**
-   * Callback to invoke when a new frame is received
-   */
-  void ReceiveCallback (uint8_t *buf, ssize_t len);
-
-  /**
-   * Forward the frame to the appropriate callback for processing
-   */
-  void ForwardUp (uint8_t *buf, ssize_t len);
-
-  /**
-   * Start Sending a Packet Down the Wire.
-   * @param p packet to send
-   * @returns true if success, false on failure
-   */
-  bool TransmitStart (Ptr<Packet> p);
-
-  void NotifyLinkUp (void);
-
-  /**
-   * The ns-3 node associated to the net device.
-   */
-  Ptr<Node> m_node;
-
-  /*
-   * a copy of the node id so the read thread doesn't have to GetNode() in
-   * in order to find the node ID.  Thread unsafe reference counting in
-   * multithreaded apps is not a good thing.
-   */
-  uint32_t m_nodeId;
-
-  /**
-   * The ns-3 interface index (in the sense of net device index) that has been assigned to this network device.
-   */
-  uint32_t m_ifIndex;
-
-  /**
-   * \internal
-   *
-   * The file descriptor used for receive/send network traffic.
-   */
-  int m_fd;
-
-  /**
-   * Reader for the file descriptor.
-   */
-  Ptr<FdNetDeviceFdReader> m_fdReader;
-
-  /**
-   * The net device mac address.
-   */
-  Mac48Address m_address;
-
-  /**
-   * \internal
-   *
-   * Callbacks to fire if the link changes state (up or down).
-   */
-  TracedCallback<> m_linkChangeCallbacks;
-
-  /**
-   * Flag indicating whether or not the underlying net device supports
-   * broadcast.
-   */
-  bool m_isBroadcast;
-
-  /**
-   * Flag indicating whether or not the underlying net device supports
-   * multicast.
-   */
-  bool m_isMulticast;
-
-  /**
-   * Number of packets that were received and scheduled for read but not yeat read.
-   */
-  uint32_t m_pendingReadCount;
-
-  /**
-   * Maximum number of packets that can be received and scheduled for read but not yeat read.
-   */
-  uint32_t m_maxPendingReads;
-
-
-  /**
-   * Mutex to increase pending read counter.
-   */
-  SystemMutex m_pendingReadMutex;
-
-  /**
-   * Time to start spinning up the device
-   */
-  Time m_tStart;
-
-  /**
-   * Time to start tearing down the device
-   */
-  Time m_tStop;
-
   /**
    * The callback used to notify higher layers that a packet has been received.
    */
   NetDevice::ReceiveCallback m_rxCallback;
+
+private:
+  // private copy constructor as sugested in:
+  // http://www.nsnam.org/wiki/NS-3_Python_Bindings#.22invalid_use_of_incomplete_type.22
+  FdNetDevice (FdNetDevice const &);
 
   /**
    * The callback used to notify higher layers that a packet has been received in promiscuous mode.
@@ -422,6 +353,101 @@ private:
    */
   TracedCallback<Ptr<const Packet> > m_phyRxDropTrace;
 
+  /**
+   * Callback to invoke when a new frame is received
+   */
+  virtual void ReceiveCallback (uint8_t *buf, ssize_t len);
+
+  /**
+   * Forward the frame to the appropriate callback for processing
+   */
+  virtual void ForwardUp (uint8_t *buf, ssize_t len);
+
+private:
+  // private copy constructor as sugested in:
+  // http://www.nsnam.org/wiki/index.php/NS-3_Python_Bindings#.22invalid_use_of_incomplete_type.22
+  FdNetDevice (FdNetDevice const &);
+
+  /**
+   * \internal
+   *
+   * Spin up the device
+   */
+  void StartDevice (void);
+
+  /**
+   * \internal
+   *
+   * Tear down the device
+   */
+  void StopDevice (void);
+
+  /**
+   * Start Sending a Packet Down the Wire.
+   * @param p packet to send
+   * @returns true if success, false on failure
+   */
+  bool TransmitStart (Ptr<Packet> p);
+
+  void NotifyLinkUp (void);
+
+  /**
+   * The ns-3 node associated to the net device.
+   */
+  Ptr<Node> m_node;
+
+  /**
+   * The ns-3 interface index (in the sense of net device index) that has been assigned to this network device.
+   */
+  uint32_t m_ifIndex;
+
+  /**
+   * \internal
+   *
+   * The file descriptor used for receive/send network traffic.
+   */
+  int m_fd;
+
+  /**
+   * Reader for the file descriptor.
+   */
+  Ptr<FdNetDeviceFdReader> m_fdReader;
+
+  /**
+   * The net device mac address.
+   */
+  Mac48Address m_address;
+
+  /**
+   * \internal
+   *
+   * Callbacks to fire if the link changes state (up or down).
+   */
+  TracedCallback<> m_linkChangeCallbacks;
+
+  /**
+   * Flag indicating whether or not the underlying net device supports
+   * broadcast.
+   */
+  bool m_isBroadcast;
+
+  /**
+   * Flag indicating whether or not the underlying net device supports
+   * multicast.
+   */
+  bool m_isMulticast;
+
+  /**
+   * \internal
+   *
+   * Time to start spinning up the device
+   */
+  Time m_tStart;
+
+  /**
+   * Time to start tearing down the device
+   */
+  Time m_tStop;
 };
 
 } // namespace ns3
