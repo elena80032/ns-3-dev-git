@@ -354,7 +354,11 @@ private:
   TracedCallback<Ptr<const Packet> > m_phyRxDropTrace;
 
   /**
-   * Callback to invoke when a new frame is received
+   * \internal
+   *
+   * Callback to invoke when a new frame is received. If you don't want
+   * the buffer to be free'd, set the m_freeBufferInRCallback flag in
+   * a subclass.
    */
   virtual void ReceiveCallback (uint8_t *buf, ssize_t len);
 
