@@ -302,11 +302,6 @@ protected:
    */
   NetDevice::ReceiveCallback m_rxCallback;
 
-private:
-  // private copy constructor as sugested in:
-  // http://www.nsnam.org/wiki/NS-3_Python_Bindings#.22invalid_use_of_incomplete_type.22
-  FdNetDevice (FdNetDevice const &);
-
   /**
    * The callback used to notify higher layers that a packet has been received in promiscuous mode.
    */
@@ -438,12 +433,6 @@ private:
    * Reader for the file descriptor.
    */
   Ptr<FdNetDeviceFdReader> m_fdReader;
-
-  /**
-<<<<<<< HEAD
-   * The net device mac address.
-   */
-  Mac48Address m_address;
 
   /**
    * \internal
