@@ -282,9 +282,8 @@ PointToPointNetDevice::TransmitComplete (void)
   Ptr<Packet> p = m_queue->Dequeue ();
   if (p == 0)
     {
-      //
-      // No packet was on the queue, so we just exit.
-      //
+      m_backPressureCallback (this);
+
       return;
     }
 
@@ -669,5 +668,10 @@ PointToPointNetDevice::EtherToPpp (uint16_t proto)
   return 0;
 }
 
+bool
+PointToPointNetDevice::IsReady()
+{
+  return (m_txMachineState == READY);
+}
 
 } // namespace ns3
