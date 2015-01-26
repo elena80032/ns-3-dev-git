@@ -64,7 +64,7 @@ RttTestCase::DoRun (void)
   nv->SetAttribute ("Mean", DoubleValue (m_mean));
   nv->SetAttribute ("Variance", DoubleValue (m_variance));
 
-  NS_TEST_EXPECT_MSG_EQ (m_mean, rtt->GetCurrentEstimate ().GetMilliSeconds (), "Initial estimate should match mean");
+  NS_TEST_EXPECT_MSG_EQ (m_mean, rtt->GetEstimate ().GetMilliSeconds (), "Initial estimate should match mean");
 
   double a, v, g;
   a = v = m_mean;
@@ -82,12 +82,9 @@ RttTestCase::DoRun (void)
   //5% tolerance
   double tolerance = m_mean * .05;
 
-  NS_TEST_ASSERT_MSG_EQ_TOL (m_mean, rtt->GetCurrentEstimate ().GetMilliSeconds (), tolerance, "Unexpected estimate");
-
-  int expectedTimeout = (int)a + 4 * (int)v;
-
-  NS_TEST_EXPECT_MSG_EQ (rtt->RetransmitTimeout ().GetMilliSeconds (), expectedTimeout, "Timeout values do not match");
+  NS_TEST_ASSERT_MSG_EQ_TOL (m_mean, rtt->GetEstimate ().GetMilliSeconds (), tolerance, "Unexpected estimate");
 }
+
 void
 RttTestCase::DoTeardown (void)
 {

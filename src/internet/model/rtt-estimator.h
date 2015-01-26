@@ -32,34 +32,8 @@
 
 namespace ns3 {
 
-/**
- * \ingroup tcp
- *
- * \brief Helper class to store RTT measurements
- */
-class RttHistory {
-public:
-  /**
-   * \brief Constructor - builds an RttHistory with the given parameters
-   * \param s First sequence number in packet sent
-   * \param c Number of bytes sent
-   * \param t Time this one was sent
-   */
-  RttHistory (SequenceNumber32 s, uint32_t c, Time t);
-  /**
-   * \brief Copy constructor
-   * \param h the object to copy
-   */
-  RttHistory (const RttHistory& h); // Copy constructor
-public:
-  SequenceNumber32  seq;  //!< First sequence number in packet sent
-  uint32_t        count;  //!< Number of bytes sent
-  Time            time;   //!< Time this one was sent
-  bool            retx;   //!< True if this has been retransmitted
-};
-
-/// Container for RttHistory objects
-typedef std::deque<RttHistory> RttHistory_t;
+class Packet;
+class TcpHeader;
 
 /**
  * \ingroup tcp
@@ -86,35 +60,10 @@ public:
   virtual TypeId GetInstanceTypeId (void) const;
 
   /**
-   * \brief Note that a particular sequence has been sent
-   * \param seq the packet sequence number.
-   * \param size the packet size.
-   */
-  virtual void SentSeq (SequenceNumber32 seq, uint32_t size);
-
-  /**
-   * \brief Note that a particular ack sequence has been received
-   * \param ackSeq the ack sequence number.
-   * \return The measured RTT for this ack.
-   */
-  virtual Time EstimateRttFromSeq (SequenceNumber32 ackSeq);
-
-  /**
-   * \brief Clear all history entries
-   */
-  virtual void ClearSent ();
-
-  /**
    * \brief Add a new measurement to the estimator. Pure virtual function.
    * \param t the new RTT measure.
    */
   virtual void  Measurement (Time t) = 0;
-
-  /**
-   * \brief Returns the estimated RTO. Pure virtual function.
-   * \return the estimated RTO.
-   */
-  virtual Time RetransmitTimeout () = 0;
 
   /**
    * \brief Copy object
@@ -123,55 +72,29 @@ public:
   virtual Ptr<RttEstimator> Copy () const = 0;
 
   /**
-   * \brief Increase the estimation multiplier up to MaxMultiplier.
-   */
-  virtual void IncreaseMultiplier ();
-
-  /**
-   * \brief Resets the estimation multiplier to 1.
-   */
-  virtual void ResetMultiplier ();
-
-  /**
    * \brief Resets the estimation to its initial state.
    */
   virtual void Reset ();
 
   /**
-   * \brief Sets the Minimum RTO.
-   * \param minRto The minimum RTO returned by the estimator.
+   * \brief gets the RTT estimate.
+   * \return The RTT estimate.
    */
-  void SetMinRto (Time minRto);
+  Time GetEstimate (void) const;
 
   /**
-   * \brief Get the Minimum RTO.
-   * \return The minimum RTO returned by the estimator.
+   * \brief gets the RTT estimate variation.
+   * \return The RTT estimate variation.
    */
-  Time GetMinRto (void) const;
-
-  /**
-   * \brief Sets the current RTT estimate (forcefully).
-   * \param estimate The current RTT estimate.
-   */
-  void SetCurrentEstimate (Time estimate);
-
-  /**
-   * \brief gets the current RTT estimate.
-   * \return The current RTT estimate.
-   */
-  Time GetCurrentEstimate (void) const;
+  Time GetEstimateVariation (void) const;
 
 private:
-  SequenceNumber32 m_next;    //!< Next expected sequence to be sent
-  RttHistory_t m_history;     //!< List of sent packet
-  uint16_t m_maxMultiplier;   //!< Maximum RTO Multiplier
   Time m_initialEstimatedRtt; //!< Initial RTT estimation
 
 protected:
-  Time         m_currentEstimatedRtt;     //!< Current estimate
-  Time         m_minRto;                  //!< minimum value of the timeout
+  Time         m_estimatedRtt;            //!< Current estimate
+  Time         m_estimatedRttVariation;   //!< Current estimate variation
   uint32_t     m_nSamples;                //!< Number of samples
-  uint16_t     m_multiplier;              //!< RTO Multiplier
 };
 
 /**
@@ -208,12 +131,6 @@ public:
    */
   void Measurement (Time measure);
 
-  /**
-   * \brief Returns the estimated RTO.
-   * \return the estimated RTO.
-   */
-  Time RetransmitTimeout ();
-
   Ptr<RttEstimator> Copy () const;
 
   /**
@@ -221,15 +138,9 @@ public:
    */
   void Reset ();
 
-  /**
-   * \brief Sets the estimator Gain.
-   * \param g the gain, where 0 < g < 1.
-   */
-  void Gain (double g);
-
 private:
-  double       m_gain;       //!< Filter gain
-  Time         m_variance;   //!< Current variance
+  double       m_alpha;       //!< Filter gain for average
+  double       m_beta;        //!< Filter gain for variance
 };
 } // namespace ns3
 
