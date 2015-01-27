@@ -724,6 +724,8 @@ protected:
 
   bool     m_timestampEnabled;    //!< Timestamp option enabled
   uint32_t m_timestampToEcho;     //!< Timestamp to echo
+
+  bool m_sendInAck;
 };
 
 } // namespace ns3

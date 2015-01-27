@@ -106,6 +106,10 @@ TcpSocketBase::GetTypeId (void)
                    MakeTimeAccessor (&TcpSocketBase::SetClockGranularity,
                                      &TcpSocketBase::GetClockGranularity),
                                      MakeTimeChecker ())
+    .AddAttribute ("SendInAck", "Enable or disable sending when ACK is received",
+                   BooleanValue (true),
+                   MakeBooleanAccessor (&TcpSocketBase::m_sendInAck),
+                   MakeBooleanChecker ())
     .AddTraceSource ("RTO",
                      "Retransmission timeout",
                      MakeTraceSourceAccessor (&TcpSocketBase::m_rto),
@@ -201,7 +205,8 @@ TcpSocketBase::TcpSocketBase (const TcpSocketBase& sock)
     m_sndScaleFactor (sock.m_sndScaleFactor),
     m_rcvScaleFactor (sock.m_rcvScaleFactor),
     m_timestampEnabled (sock.m_timestampEnabled),
-    m_timestampToEcho (sock.m_timestampToEcho)
+    m_timestampToEcho (sock.m_timestampToEcho),
+    m_sendInAck (sock.m_sendInAck)
 
 {
   NS_LOG_FUNCTION (this);
@@ -2293,8 +2298,12 @@ TcpSocketBase::NewAck (SequenceNumber32 const& ack)
                     (Simulator::Now () + Simulator::GetDelayLeft (m_retxEvent)).GetSeconds ());
       m_retxEvent.Cancel ();
     }
-  // Try to send more data
-  SendPendingData (m_connected);
+
+  if (m_sendInAck)
+    {
+      // Try to send more data
+      SendPendingData (m_connected);
+    }
 }
 
 // Retransmit timeout
