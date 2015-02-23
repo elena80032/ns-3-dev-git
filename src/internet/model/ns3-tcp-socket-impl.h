@@ -20,17 +20,54 @@
 #define NS3TCPSOCKETIMPL_H
 
 #include "tcp-socket.h"
-#include "tcp-l4-protocol.h"
-
+#include <stdint.h>
+#include <queue>
+#include "ns3/callback.h"
 #include "ns3/traced-value.h"
+#include "ns3/tcp-socket.h"
+#include "ns3/ptr.h"
+#include "ns3/ipv4-address.h"
+#include "ns3/ipv4-header.h"
+#include "ns3/ipv4-interface.h"
+#include "ns3/ipv6-header.h"
+#include "ns3/ipv6-interface.h"
+#include "ns3/event-id.h"
+#include "tcp-tx-buffer.h"
+#include "tcp-rx-buffer.h"
+#include "rtt-estimator.h"
 
 namespace ns3 {
+
+class Ipv4EndPoint;
+class Ipv6EndPoint;
+class Node;
+class Packet;
+class TcpL4Protocol;
+class TcpHeader;
 
 class Ns3TcpSocketImpl : public TcpSocket
 {
 public:
   Ns3TcpSocketImpl ();
   ~Ns3TcpSocketImpl ();
+
+  /**
+   * \brief Set the associated node.
+   * \param node the node
+   */
+  virtual void SetNode (Ptr<Node> node);
+
+  /**
+   * \brief Set the associated TCP L4 protocol.
+   * \param tcp the TCP L4 protocol
+   */
+  virtual void SetTcp (Ptr<TcpL4Protocol> tcp);
+
+  /**
+   * \brief Set the associated RTT estimator.
+   * \param rtt the RTT estimator
+   */
+  virtual void SetRtt (Ptr<RttEstimator> rtt);
 
   // Necessary implementations of null functions from ns3::Socket
   virtual enum SocketErrno GetErrno        (void) const;
@@ -69,8 +106,11 @@ protected:
   Ipv6EndPoint*       m_endPoint6;  //!< the IPv6 endpoint
   Ptr<Node>           m_node;       //!< the associated node
   Ptr<TcpL4Protocol>  m_tcp;        //!< the associated TCP L4 protocol
+  Ptr<RttEstimator>   m_rttEstimator; //!< Round trip time estimator
 
 
+  bool                     m_closeNotified; //!< Told app to close socket
+  bool                     m_closeOnEmpty;  //!< Close socket upon tx buffer emptied
 protected:
   /**
    * \brief Called by the L3 protocol when it received a packet to pass on to TCP.
@@ -145,6 +185,20 @@ protected:
    * \returns 0 on success, -1 on failure
    */
   int SetupCallback (void);
+
+  /**
+   * \brief Configure the endpoint to a local address. Called by Connect() if Bind() didn't specify one.
+   *
+   * \returns 0 on success
+   */
+  int SetupEndpoint (void);
+
+  /**
+   * \brief Configure the endpoint v6 to a local address. Called by Connect() if Bind() didn't specify one.
+   *
+   * \returns 0 on success
+   */
+  int SetupEndpoint6 (void);
 
   /**
    * \brief Perform the real connection tasks: Send SYN if allowed, RST if invalid

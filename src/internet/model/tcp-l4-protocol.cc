@@ -40,8 +40,8 @@
 #include "ipv6-l3-protocol.h"
 #include "ipv6-routing-protocol.h"
 #include "tcp-socket-factory-impl.h"
-#include "tcp-newreno.h"
 #include "rtt-estimator.h"
+#include "ns3-tcp-socket-impl.h"
 
 #include <vector>
 #include <sstream>
@@ -74,15 +74,10 @@ TcpL4Protocol::GetTypeId (void)
                    TypeIdValue (RttMeanDeviation::GetTypeId ()),
                    MakeTypeIdAccessor (&TcpL4Protocol::m_rttTypeId),
                    MakeTypeIdChecker ())
-    .AddAttribute ("SocketType",
-                   "Socket type of TCP objects.",
-                   TypeIdValue (TcpNewReno::GetTypeId ()),
-                   MakeTypeIdAccessor (&TcpL4Protocol::m_socketTypeId),
-                   MakeTypeIdChecker ())
     .AddAttribute ("SocketList", "The list of sockets associated to this protocol.",
                    ObjectVectorValue (),
                    MakeObjectVectorAccessor (&TcpL4Protocol::m_sockets),
-                   MakeObjectVectorChecker<TcpSocketBase> ())
+                   MakeObjectVectorChecker<Ns3TcpSocketImpl> ())
   ;
   return tid;
 }
@@ -185,7 +180,7 @@ TcpL4Protocol::CreateSocket (TypeId socketTypeId)
   rttFactory.SetTypeId (m_rttTypeId);
   socketFactory.SetTypeId (socketTypeId);
   Ptr<RttEstimator> rtt = rttFactory.Create<RttEstimator> ();
-  Ptr<TcpSocketBase> socket = socketFactory.Create<TcpSocketBase> ();
+  Ptr<Ns3TcpSocketImpl> socket = socketFactory.Create<Ns3TcpSocketImpl> ();
   socket->SetNode (m_node);
   socket->SetTcp (this);
   socket->SetRtt (rtt);

@@ -16,6 +16,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
+#include <algorithm>
+
 #include "ns3-tcp-socket-impl.h"
 #include "ns3/abort.h"
 #include "ns3/node.h"
@@ -40,6 +42,12 @@
 #include "tcp-l4-protocol.h"
 #include "ipv4-end-point.h"
 #include "ipv6-end-point.h"
+#include "ipv6-l3-protocol.h"
+#include "tcp-header.h"
+#include "tcp-option-winscale.h"
+#include "tcp-option-ts.h"
+#include "rtt-estimator.h"
+
 #include "ns3/log.h"
 
 NS_LOG_COMPONENT_DEFINE ("Ns3TcpSocketImpl");
@@ -56,6 +64,24 @@ Ns3TcpSocketImpl::Ns3TcpSocketImpl()
 Ns3TcpSocketImpl::~Ns3TcpSocketImpl()
 {
 
+}
+
+void
+Ns3TcpSocketImpl::SetNode (Ptr<Node> node)
+{
+  m_node = node;
+}
+
+void
+Ns3TcpSocketImpl::SetTcp (Ptr<TcpL4Protocol> tcp)
+{
+  m_tcp = tcp;
+}
+
+void
+Ns3TcpSocketImpl::SetRtt (Ptr<RttEstimator> rttEstimator)
+{
+  m_rttEstimator = rttEstimator;
 }
 
 enum Socket::SocketErrno
@@ -150,8 +176,8 @@ Ns3TcpSocketImpl::Bind (void)
       return -1;
     }
 
-  if (std::find(m_tcp->m_sockets.begin(), m_tcp->m_sockets.end(), this) ==
-      m_tcp->m_sockets.end())
+  if (std::find(m_tcp->m_sockets.begin(), m_tcp->m_sockets.end(), this)
+      == m_tcp->m_sockets.end())
     {
       m_tcp->m_sockets.push_back (this);
     }
@@ -173,8 +199,8 @@ Ns3TcpSocketImpl::Bind6 (void)
       return -1;
     }
 
-  if (std::find(m_tcp->m_sockets.begin(), m_tcp->m_sockets.end(), this) ==
-      m_tcp->m_sockets.end())
+  if (std::find(m_tcp->m_sockets.begin(), m_tcp->m_sockets.end(), this)
+      == m_tcp->m_sockets.end())
     {
       m_tcp->m_sockets.push_back (this);
     }
@@ -369,6 +395,77 @@ Ns3TcpSocketImpl::Connect (const Address & address)
 
   // DoConnect() will do state-checking and send a SYN packet
   return DoConnect ();
+}
+
+int
+Ns3TcpSocketImpl::SetupEndpoint ()
+{
+  NS_LOG_FUNCTION (this);
+
+  Ptr<Ipv4> ipv4 = m_node->GetObject<Ipv4> ();
+  NS_ASSERT (ipv4 != 0);
+
+  if (ipv4->GetRoutingProtocol () == 0)
+    {
+      NS_FATAL_ERROR ("No Ipv4RoutingProtocol in the node");
+    }
+
+  // Create a dummy packet, then ask the routing function for the best output
+  // interface's address
+  Ipv4Header header;
+  header.SetDestination (m_endPoint->GetPeerAddress ());
+  Socket::SocketErrno errno_;
+  Ptr<Ipv4Route> route;
+  Ptr<NetDevice> oif = m_boundnetdevice;
+  route = ipv4->GetRoutingProtocol ()->RouteOutput (Ptr<Packet> (), header, oif,
+                                                    errno_);
+  if (route == 0)
+    {
+      NS_LOG_LOGIC ("Route to " << m_endPoint->GetPeerAddress () <<
+                    " does not exist");
+      NS_LOG_ERROR (errno_);
+      m_errno = errno_;
+      return -1;
+    }
+
+  NS_LOG_LOGIC ("Route exists");
+  m_endPoint->SetLocalAddress (route->GetSource ());
+  return 0;
+}
+
+int
+Ns3TcpSocketImpl::SetupEndpoint6 ()
+{
+  NS_LOG_FUNCTION (this);
+
+  Ptr<Ipv6L3Protocol> ipv6 = m_node->GetObject<Ipv6L3Protocol> ();
+  NS_ASSERT (ipv6 != 0);
+
+  if (ipv6->GetRoutingProtocol () == 0)
+    {
+      NS_FATAL_ERROR ("No Ipv6RoutingProtocol in the node");
+    }
+  // Create a dummy packet, then ask the routing function for the best output
+  // interface's address
+  Ipv6Header header;
+  header.SetDestinationAddress (m_endPoint6->GetPeerAddress ());
+  Socket::SocketErrno errno_;
+  Ptr<Ipv6Route> route;
+  Ptr<NetDevice> oif = m_boundnetdevice;
+  route = ipv6->GetRoutingProtocol ()->RouteOutput (Ptr<Packet> (), header, oif,
+                                                    errno_);
+  if (route == 0)
+    {
+      NS_LOG_LOGIC ("Route to " << m_endPoint6->GetPeerAddress () <<
+                    " does not exist");
+      NS_LOG_ERROR (errno_);
+      m_errno = errno_;
+      return -1;
+    }
+
+  NS_LOG_LOGIC ("Route exists");
+  m_endPoint6->SetLocalAddress (route->GetSource ());
+  return 0;
 }
 
 int
