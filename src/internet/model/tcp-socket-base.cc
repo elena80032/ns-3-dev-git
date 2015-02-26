@@ -606,7 +606,10 @@ TcpSocketBase::Send (Ptr<Packet> p, uint32_t flags)
       NS_LOG_LOGIC ("txBufSize=" << m_txBuffer->Size () << " state " << TcpStateName[m_state]);
       if (m_state == ESTABLISHED || m_state == CLOSE_WAIT)
         { // Try to send the data out
-          SendPendingData (m_connected);
+          if (!m_sendPendingDataEvent.IsRunning ())
+            {
+              m_sendPendingDataEvent = Simulator::Schedule ( TimeStep (1), &TcpSocketBase::SendPendingData, this, m_connected);
+            }
         }
       return p->GetSize ();
     }
@@ -953,8 +956,7 @@ TcpSocketBase::DoForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port
       NS_LOG_LOGIC (this << " Leaving zerowindow persist state");
       m_persistEvent.Cancel ();
     }
-  m_rWnd = tcpHeader.GetWindowSize ();
-  m_rWnd <<= m_rcvScaleFactor;
+  m_rWnd = (uint32_t(tcpHeader.GetWindowSize ()) << m_rcvScaleFactor);
 
   // Discard fully out of range data packets
   if (packet->GetSize ()
@@ -1057,8 +1059,7 @@ TcpSocketBase::DoForwardUp (Ptr<Packet> packet, Ipv6Header header, uint16_t port
       NS_LOG_LOGIC (this << " Leaving zerowindow persist state");
       m_persistEvent.Cancel ();
     }
-  m_rWnd = tcpHeader.GetWindowSize ();
-  m_rWnd <<= m_rcvScaleFactor;
+  m_rWnd = (uint32_t(tcpHeader.GetWindowSize ()) << m_rcvScaleFactor);
 
   // Discard fully out of range packets
   if (packet->GetSize ()
@@ -2069,7 +2070,6 @@ TcpSocketBase::SendPendingData (bool withAck)
   if (m_txBuffer->Size () == 0)
     {
       return false;                           // Nothing to send
-
     }
   if (m_endPoint == 0 && m_endPoint6 == 0)
     {
@@ -2080,17 +2080,10 @@ TcpSocketBase::SendPendingData (bool withAck)
   while (m_txBuffer->SizeFromSequence (m_nextTxSequence))
     {
       uint32_t w = AvailableWindow (); // Get available window size
-      NS_LOG_LOGIC ("TcpSocketBase " << this << " SendPendingData" <<
-                    " w " << w <<
-                    " rxwin " << m_rWnd <<
-                    " segsize " << m_segmentSize <<
-                    " nextTxSeq " << m_nextTxSequence <<
-                    " highestRxAck " << m_txBuffer->HeadSequence () <<
-                    " pd->Size " << m_txBuffer->Size () <<
-                    " pd->SFS " << m_txBuffer->SizeFromSequence (m_nextTxSequence));
       // Stop sending if we need to wait for a larger Tx window (prevent silly window syndrome)
       if (w < m_segmentSize && m_txBuffer->SizeFromSequence (m_nextTxSequence) > w)
         {
+          NS_LOG_LOGIC ("Preventing Silly Window Syndrome. Wait to send.");
           break; // No more
         }
       // Nagle's algorithm (RFC896): Hold off sending if there is unacked data
@@ -2101,6 +2094,14 @@ TcpSocketBase::SendPendingData (bool withAck)
           NS_LOG_LOGIC ("Invoking Nagle's algorithm. Wait to send.");
           break;
         }
+      NS_LOG_LOGIC ("TcpSocketBase " << this << " SendPendingData" <<
+                    " w " << w <<
+                    " rxwin " << m_rWnd <<
+                    " segsize " << m_segmentSize <<
+                    " nextTxSeq " << m_nextTxSequence <<
+                    " highestRxAck " << m_txBuffer->HeadSequence () <<
+                    " pd->Size " << m_txBuffer->Size () <<
+                    " pd->SFS " << m_txBuffer->SizeFromSequence (m_nextTxSequence));
       uint32_t s = std::min (w, m_segmentSize);  // Send no more than window
       uint32_t sz = SendDataPacket (m_nextTxSequence, s, withAck);
       nPacketsSent++;                             // Count sent this loop
@@ -2122,13 +2123,6 @@ TcpSocketBase::BytesInFlight ()
 {
   NS_LOG_FUNCTION (this);
   return m_highTxMark.Get () - m_txBuffer->HeadSequence ();
-}
-
-uint32_t
-TcpSocketBase::Window ()
-{
-  NS_LOG_FUNCTION (this);
-  return m_rWnd;
 }
 
 uint32_t
@@ -2321,8 +2315,10 @@ TcpSocketBase::NewAck (SequenceNumber32 const& ack)
 
   if (m_sendInAck)
     {
-      // Try to send more data
-      SendPendingData (m_connected);
+if (!m_sendPendingDataEvent.IsRunning ())
+    {
+      m_sendPendingDataEvent = Simulator::Schedule ( TimeStep (1), &TcpSocketBase::SendPendingData, this, m_connected);
+    }
     }
 }
 
@@ -2460,6 +2456,7 @@ TcpSocketBase::CancelAllTimers ()
   m_delAckEvent.Cancel ();
   m_lastAckEvent.Cancel ();
   m_timewaitEvent.Cancel ();
+  m_sendPendingDataEvent.Cancel ();
 }
 
 /* Move TCP to Time_Wait state and schedule a transition to Closed state */
@@ -2614,6 +2611,7 @@ TcpSocketBase::ReadOptions (const TcpHeader& header)
             {
               m_winScalingEnabled = true;
               ProcessOptionWScale (header.GetOption (TcpOption::WINSCALE));
+              ScaleSsThresh (m_sndScaleFactor);
             }
         }
     }
