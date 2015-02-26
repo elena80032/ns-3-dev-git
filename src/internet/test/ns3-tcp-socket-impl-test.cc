@@ -19,6 +19,7 @@
 #include "ns3/test.h"
 #include "ns3/socket-factory.h"
 #include "ns3/tcp-socket-factory.h"
+#include "ns3/ns3-tcp-socket-impl.h"
 #include "ns3/simulator.h"
 #include "ns3/simple-channel.h"
 #include "ns3/simple-net-device.h"
@@ -48,6 +49,102 @@
 using namespace ns3;
 
 NS_LOG_COMPONENT_DEFINE ("Ns3TcpSocketImplTest");
+
+class Ns3TcpSocketImplDerived : public Ns3TcpSocketImpl
+{
+public:
+ void SetShutdownSendCallback   (Callback<void> cb) { m_shutdownSendCb = cb; }
+ void SetShutdownRecvCallback   (Callback<void> cb) { m_shutdownRecvCb = cb; }
+ void SetSendCallback           (Callback<void> cb) { m_sendCb = cb; }
+ void SetSendToCallback         (Callback<void> cb) { m_sendToCb = cb; }
+ void SetRecvCallback           (Callback<void> cb) { m_recvCb = cb; }
+ void SetRecvFromCallback       (Callback<void> cb) { m_recvFromCb = cb; }
+ void SetGetTxAvailableCallback (Callback<void> cb) { m_getTxAvailableCb = cb; }
+ void SetGetRxAvailableCallback (Callback<void> cb) { m_getRxAvailableCb = cb; }
+
+ void SetForwardUpCallback      (Callback<void> cb) { m_fordwardUpCb = cb; }
+ void SetForwardUp6Callback     (Callback<void> cb) { m_forwardUp6Cb = cb; }
+ void SetForwardIcmpCallback    (Callback<void> cb) { m_forwardIcmpCb = cb;}
+ void SetForwardIcmp6Callback   (Callback<void> cb) { m_forwardIcmp6Cb = cb; }
+ void SetDestroyCallback        (Callback<void> cb) { m_destroyCb = cb; }
+ void SetDestroy6Callback       (Callback<void> cb) { m_destroy6Cb = cb; }
+ void SetDoConnectCallback      (Callback<void> cb) { m_doConnectCb = cb; }
+
+ void SetGetRxBufferSizeCallback    (Callback<void> cb) { m_getRxBufferSizeCb = cb; }
+ void SetHasPendingDataCallback     (Callback<void> cb) { m_hasPendingDataCb = cb; }
+ void SetCloseAndNotifyCallback     (Callback<void> cb) { m_closeAndNotifyCb = cb; }
+ void SetDeallocateEndPointCallback (Callback<void> cb) { m_deallocateEndPointCb = cb; }
+
+ void SetCancelAllTimersCallback (Callback<void> cb) { m_cancelAllTimersCb = cb; }
+ void SetSendRSTCallback         (Callback<void> cb) { m_sendRSTCb = cb; }
+ void SetSendFINCallback         (Callback<void> cb) { m_sendFINCb = cb; }
+ void SetSendFINACKCallback      (Callback<void> cb) { m_sendFINACKCb = cb; }
+
+private:
+ Callback<void> m_shutdownSendCb;
+ Callback<void> m_shutdownRecvCb;
+ Callback<void> m_sendCb;
+ Callback<void> m_sendToCb;
+ Callback<void> m_recvCb;
+ Callback<void> m_recvFromCb;
+ Callback<void> m_getTxAvailableCb;
+ Callback<void> m_getRxAvailableCb;
+ Callback<void> m_fordwardUpCb;
+ Callback<void> m_forwardUp6Cb;
+ Callback<void> m_forwardIcmpCb;
+ Callback<void> m_forwardIcmp6Cb;
+ Callback<void> m_destroyCb;
+ Callback<void> m_destroy6Cb;
+ Callback<void> m_doConnectCb;
+ Callback<void> m_getRxBufferSizeCb;
+ Callback<void> m_hasPendingDataCb;
+ Callback<void> m_closeAndNotifyCb;
+ Callback<void> m_deallocateEndPointCb;
+ Callback<void> m_cancelAllTimersCb;
+ Callback<void> m_sendRSTCb;
+ Callback<void> m_sendFINCb;
+ Callback<void> m_sendFINACKCb;
+
+
+public:
+ int ShutdownSend (void) { m_shutdownSendCb (); }
+ int ShutdownRecv (void) { m_shutdownRecvCb (); }
+
+ int Send (Ptr<Packet> p, uint32_t flags) { m_sendCb (); }
+ int SendTo (Ptr<Packet> p, uint32_t flags, const Address &toAddress) { m_sendToCb (); }
+
+ Ptr<Packet> Recv    (uint32_t maxSize, uint32_t flags) { m_recvCb (); }
+ Ptr<Packet> RecvFrom(uint32_t maxSize, uint32_t flags,
+                      Address &fromAddress) { m_recvFromCb ();}
+ uint32_t GetTxAvailable  (void) const { m_getTxAvailableCb (); }
+ uint32_t GetRxAvailable  (void) const { m_getRxAvailableCb (); }
+
+protected:
+ void ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
+                 Ptr<Ipv4Interface> incomingInterface) { m_fordwardUpCb (); }
+
+ void ForwardUp6 (Ptr<Packet> packet, Ipv6Header header, uint16_t port,
+                  Ptr<Ipv6Interface> incomingInterface) { m_forwardUp6Cb (); }
+
+ void ForwardIcmp (Ipv4Address icmpSource, uint8_t icmpTtl, uint8_t icmpType,
+                   uint8_t icmpCode, uint32_t icmpInfo) { m_forwardIcmpCb (); }
+ void ForwardIcmp6 (Ipv6Address icmpSource, uint8_t icmpTtl, uint8_t icmpType,
+                   uint8_t icmpCode, uint32_t icmpInfo) { m_forwardIcmp6Cb (); }
+
+ void Destroy (void) { m_destroyCb (); }
+ void Destroy6 (void) { m_destroy6Cb (); }
+
+ int DoConnect (void) { m_doConnectCb (); }
+ uint32_t GetRxBufferSize (void) const { m_getRxBufferSizeCb (); }
+ bool HasPendingData (void) const { m_hasPendingDataCb (); }
+ void CloseAndNotify (void) { m_closeAndNotifyCb (); }
+ void DeallocateEndPoint (void) { m_deallocateEndPointCb (); }
+
+ void CancelAllTimers (void) { m_cancelAllTimersCb (); }
+ void SendRST    (void) { m_sendRSTCb (); }
+ void SendFIN    (void) { m_sendFINCb (); }
+ void SendFINACK (void) { m_sendFINACKCb (); }
+};
 
 class Ns3TcpSocketImplTest : public TestCase
 {
