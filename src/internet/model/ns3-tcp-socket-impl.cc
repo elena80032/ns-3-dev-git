@@ -157,8 +157,6 @@ Ns3TcpSocketImpl::BindToNetDevice (Ptr<NetDevice> netdevice)
     }
 
   m_endPoint6->BindToNetDevice (netdevice);
-
-  return;
 }
 
 /* Inherit from Socket class: Bind socket to an end-point in TcpL4Protocol */
