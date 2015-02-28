@@ -224,7 +224,6 @@ def build(bld):
         'test/ipv6-packet-info-tag-test-suite.cc',
         'test/ipv6-test.cc',
         'test/ipv6-raw-test.cc',
-        'test/tcp-test.cc',
         'test/tcp-timestamp-test.cc',
         'test/tcp-wscaling-test.cc',
         'test/tcp-option-test.cc',
@@ -235,9 +234,10 @@ def build(bld):
         'test/ipv6-fragmentation-test.cc',
         'test/ipv6-forwarding-test.cc',
         'test/ipv6-ripng-test.cc',
-     	'test/ipv6-address-helper-test-suite.cc',
+        'test/ipv6-address-helper-test-suite.cc',
         'test/rtt-test.cc',
         'test/codel-queue-test-suite.cc',
+        'test/ns3-tcp-socket-impl-test.cc',
         ]
     privateheaders = bld(features='ns3privateheader')
     privateheaders.module = 'internet'
@@ -331,6 +331,7 @@ def build(bld):
         'model/rtt-estimator.h',
         'model/ipv4-packet-probe.h',
         'model/ipv6-packet-probe.h',
+        'model/ns3-tcp-socket-impl.h',
         'model/ipv6-pmtu-cache.h',
         'model/ripng.h',
         'model/ripng-header.h',

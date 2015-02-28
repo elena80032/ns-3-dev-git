@@ -53,14 +53,14 @@ NS_LOG_COMPONENT_DEFINE ("Ns3TcpSocketImplTest");
 class Ns3TcpSocketImplDerived : public Ns3TcpSocketImpl
 {
 public:
- void SetShutdownSendCallback   (Callback<void> cb) { m_shutdownSendCb = cb; }
- void SetShutdownRecvCallback   (Callback<void> cb) { m_shutdownRecvCb = cb; }
- void SetSendCallback           (Callback<void> cb) { m_sendCb = cb; }
- void SetSendToCallback         (Callback<void> cb) { m_sendToCb = cb; }
- void SetRecvCallback           (Callback<void> cb) { m_recvCb = cb; }
- void SetRecvFromCallback       (Callback<void> cb) { m_recvFromCb = cb; }
- void SetGetTxAvailableCallback (Callback<void> cb) { m_getTxAvailableCb = cb; }
- void SetGetRxAvailableCallback (Callback<void> cb) { m_getRxAvailableCb = cb; }
+ void SetShutdownSendCallback   (Callback<int> cb) { m_shutdownSendCb = cb; }
+ void SetShutdownRecvCallback   (Callback<int> cb) { m_shutdownRecvCb = cb; }
+ void SetSendCallback           (Callback<int> cb) { m_sendCb = cb; }
+ void SetSendToCallback         (Callback<int> cb) { m_sendToCb = cb; }
+ void SetRecvCallback           (Callback< Ptr<Packet> > cb) { m_recvCb = cb; }
+ void SetRecvFromCallback       (Callback< Ptr<Packet> > cb) { m_recvFromCb = cb; }
+ void SetGetTxAvailableCallback (Callback<uint32_t> cb) { m_getTxAvailableCb = cb; }
+ void SetGetRxAvailableCallback (Callback<uint32_t> cb) { m_getRxAvailableCb = cb; }
 
  void SetForwardUpCallback      (Callback<void> cb) { m_fordwardUpCb = cb; }
  void SetForwardUp6Callback     (Callback<void> cb) { m_forwardUp6Cb = cb; }
@@ -68,10 +68,10 @@ public:
  void SetForwardIcmp6Callback   (Callback<void> cb) { m_forwardIcmp6Cb = cb; }
  void SetDestroyCallback        (Callback<void> cb) { m_destroyCb = cb; }
  void SetDestroy6Callback       (Callback<void> cb) { m_destroy6Cb = cb; }
- void SetDoConnectCallback      (Callback<void> cb) { m_doConnectCb = cb; }
+ void SetDoConnectCallback      (Callback<int> cb) { m_doConnectCb = cb; }
 
- void SetGetRxBufferSizeCallback    (Callback<void> cb) { m_getRxBufferSizeCb = cb; }
- void SetHasPendingDataCallback     (Callback<void> cb) { m_hasPendingDataCb = cb; }
+ void SetGetRxBufferSizeCallback    (Callback<uint32_t> cb) { m_getRxBufferSizeCb = cb; }
+ void SetHasPendingDataCallback     (Callback<bool> cb) { m_hasPendingDataCb = cb; }
  void SetCloseAndNotifyCallback     (Callback<void> cb) { m_closeAndNotifyCb = cb; }
  void SetDeallocateEndPointCallback (Callback<void> cb) { m_deallocateEndPointCb = cb; }
 
@@ -81,23 +81,23 @@ public:
  void SetSendFINACKCallback      (Callback<void> cb) { m_sendFINACKCb = cb; }
 
 private:
- Callback<void> m_shutdownSendCb;
- Callback<void> m_shutdownRecvCb;
- Callback<void> m_sendCb;
- Callback<void> m_sendToCb;
- Callback<void> m_recvCb;
- Callback<void> m_recvFromCb;
- Callback<void> m_getTxAvailableCb;
- Callback<void> m_getRxAvailableCb;
+ Callback<int> m_shutdownSendCb;
+ Callback<int> m_shutdownRecvCb;
+ Callback<int> m_sendCb;
+ Callback<int> m_sendToCb;
+ Callback< Ptr<Packet> > m_recvCb;
+ Callback< Ptr<Packet> > m_recvFromCb;
+ Callback<uint32_t> m_getTxAvailableCb;
+ Callback<uint32_t> m_getRxAvailableCb;
  Callback<void> m_fordwardUpCb;
  Callback<void> m_forwardUp6Cb;
  Callback<void> m_forwardIcmpCb;
  Callback<void> m_forwardIcmp6Cb;
  Callback<void> m_destroyCb;
  Callback<void> m_destroy6Cb;
- Callback<void> m_doConnectCb;
- Callback<void> m_getRxBufferSizeCb;
- Callback<void> m_hasPendingDataCb;
+ Callback<int> m_doConnectCb;
+ Callback<uint32_t> m_getRxBufferSizeCb;
+ Callback<bool> m_hasPendingDataCb;
  Callback<void> m_closeAndNotifyCb;
  Callback<void> m_deallocateEndPointCb;
  Callback<void> m_cancelAllTimersCb;
@@ -107,17 +107,17 @@ private:
 
 
 public:
- int ShutdownSend (void) { m_shutdownSendCb (); }
- int ShutdownRecv (void) { m_shutdownRecvCb (); }
+ int ShutdownSend (void) { return m_shutdownSendCb (); }
+ int ShutdownRecv (void) { return m_shutdownRecvCb (); }
 
- int Send (Ptr<Packet> p, uint32_t flags) { m_sendCb (); }
- int SendTo (Ptr<Packet> p, uint32_t flags, const Address &toAddress) { m_sendToCb (); }
+ int Send (Ptr<Packet> p, uint32_t flags) { return m_sendCb (); }
+ int SendTo (Ptr<Packet> p, uint32_t flags, const Address &toAddress) { return m_sendToCb (); }
 
- Ptr<Packet> Recv    (uint32_t maxSize, uint32_t flags) { m_recvCb (); }
+ Ptr<Packet> Recv    (uint32_t maxSize, uint32_t flags) { return m_recvCb (); }
  Ptr<Packet> RecvFrom(uint32_t maxSize, uint32_t flags,
-                      Address &fromAddress) { m_recvFromCb ();}
- uint32_t GetTxAvailable  (void) const { m_getTxAvailableCb (); }
- uint32_t GetRxAvailable  (void) const { m_getRxAvailableCb (); }
+                      Address &fromAddress) { return m_recvFromCb ();}
+ uint32_t GetTxAvailable  (void) const { return m_getTxAvailableCb (); }
+ uint32_t GetRxAvailable  (void) const { return m_getRxAvailableCb (); }
 
 protected:
  void ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
@@ -134,9 +134,9 @@ protected:
  void Destroy (void) { m_destroyCb (); }
  void Destroy6 (void) { m_destroy6Cb (); }
 
- int DoConnect (void) { m_doConnectCb (); }
- uint32_t GetRxBufferSize (void) const { m_getRxBufferSizeCb (); }
- bool HasPendingData (void) const { m_hasPendingDataCb (); }
+ int DoConnect (void) { return m_doConnectCb (); }
+ uint32_t GetRxBufferSize (void) const { return m_getRxBufferSizeCb (); }
+ bool HasPendingData (void) const { return m_hasPendingDataCb (); }
  void CloseAndNotify (void) { m_closeAndNotifyCb (); }
  void DeallocateEndPoint (void) { m_deallocateEndPointCb (); }
 
@@ -146,16 +146,73 @@ protected:
  void SendFINACK (void) { m_sendFINACKCb (); }
 };
 
-class Ns3TcpSocketImplTest : public TestCase
+class Ns3TcpSocketImplTest : public TestCase, public Ns3TcpSocketImpl
 {
 public:
-  Ns3TcpSocketImplTest ();
+  Ns3TcpSocketImplTest (bool useIpv6, std::string name);
+
+  int ShutdownSend (void);
+  int ShutdownRecv (void);
+
+  int Send (Ptr<Packet> p, uint32_t flags) ;
+  int SendTo (Ptr<Packet> p, uint32_t flags, const Address &toAddress);
+
+  Ptr<Packet> Recv    (uint32_t maxSize, uint32_t flags);
+  Ptr<Packet> RecvFrom(uint32_t maxSize, uint32_t flags,
+                       Address &fromAddress);
+  uint32_t GetTxAvailable  (void) const;
+  uint32_t GetRxAvailable  (void) const;
+
+ protected:
+  void ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
+                  Ptr<Ipv4Interface> incomingInterface);
+
+  void ForwardUp6 (Ptr<Packet> packet, Ipv6Header header, uint16_t port,
+                   Ptr<Ipv6Interface> incomingInterface);
+
+  void ForwardIcmp (Ipv4Address icmpSource, uint8_t icmpTtl, uint8_t icmpType,
+                    uint8_t icmpCode, uint32_t icmpInfo);
+  void ForwardIcmp6 (Ipv6Address icmpSource, uint8_t icmpTtl, uint8_t icmpType,
+                    uint8_t icmpCode, uint32_t icmpInfo);
+
+  void Destroy (void);
+  void Destroy6 (void);
+  int DoConnect (void);
+  uint32_t GetRxBufferSize (void) const;
+  bool HasPendingData (void) const;
+  void CloseAndNotify (void);
+  void DeallocateEndPoint (void);
+
+  void CancelAllTimers (void);
+  void SendRST    (void);
+  void SendFIN    (void);
+  void SendFINACK (void);
+
+protected:
+  Ptr<Node> CreateInternetNode ();
+  Ptr<Node> CreateInternetNode6 ();
+
+  void SetupDefaultSim ();
+  void SetupDefaultSim6 ();
+
+  Ptr<SimpleNetDevice> AddSimpleNetDevice (Ptr<Node> node, const char* ipaddr,
+                                           const char* netmask);
+  Ptr<SimpleNetDevice> AddSimpleNetDevice6 (Ptr<Node> node, Ipv6Address ipaddr,
+                                            Ipv6Prefix prefix);
 
 private:
   virtual void DoRun (void);
   virtual void DoTeardown (void);
+  bool m_useIpv6;
 };
 
+
+Ns3TcpSocketImplTest::Ns3TcpSocketImplTest (bool useIpv6, std::string name)
+  : TestCase (name),
+    m_useIpv6 (useIpv6)
+{
+
+}
 
 Ptr<Node>
 Ns3TcpSocketImplTest::CreateInternetNode ()
@@ -256,7 +313,6 @@ Ns3TcpSocketImplTest::SetupDefaultSim (void)
   dev0->SetChannel (channel);
 
   Ptr<SocketFactory> sockFactory0 = node0->GetObject<TcpSocketFactory> ();
-  Ptr<SocketFactory> sockFactory1 = node1->GetObject<TcpSocketFactory> ();
 
   Ptr<Socket> server = sockFactory0->CreateSocket ();
 }
@@ -273,9 +329,22 @@ Ns3TcpSocketImplTest::SetupDefaultSim6 (void)
   dev0->SetChannel (channel);
 
   Ptr<SocketFactory> sockFactory0 = node0->GetObject<TcpSocketFactory> ();
-  Ptr<SocketFactory> sockFactory1 = node1->GetObject<TcpSocketFactory> ();
 
   Ptr<Socket> server = sockFactory0->CreateSocket ();
+}
+
+void
+Ns3TcpSocketImplTest::DoRun()
+{
+  if (m_useIpv6 == true)
+    {
+      SetupDefaultSim6 ();
+    }
+  else
+    {
+      SetupDefaultSim ();
+    }
+
 }
 
 static class Ns3TcpSocketImplTestSuite : public TestSuite
@@ -284,6 +353,8 @@ public:
   Ns3TcpSocketImplTestSuite ()
     : TestSuite ("ns3tcpsocket", UNIT)
   {
+    AddTestCase (new Ns3TcpSocketImplTest (false, "noipv6"), TestCase::QUICK);
+    AddTestCase (new Ns3TcpSocketImplTest (true,  "ipv6"),   TestCase::QUICK);
   }
 
 } g_n3TcpSocketImplTestSuite;
