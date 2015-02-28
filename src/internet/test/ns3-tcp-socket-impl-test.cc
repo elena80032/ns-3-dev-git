@@ -160,6 +160,10 @@ public:
   Ptr<Packet> Recv    (uint32_t maxSize, uint32_t flags);
   Ptr<Packet> RecvFrom(uint32_t maxSize, uint32_t flags,
                        Address &fromAddress);
+
+  virtual bool SetAllowBroadcast (bool allowBroadcast);
+  virtual bool GetAllowBroadcast () const;
+
   uint32_t GetTxAvailable  (void) const;
   uint32_t GetRxAvailable  (void) const;
 
@@ -188,6 +192,30 @@ public:
   void SendFIN    (void);
   void SendFINACK (void);
 
+private:
+  virtual void SetSndBufSize (uint32_t size);
+  virtual uint32_t GetSndBufSize (void) const;
+  virtual void SetRcvBufSize (uint32_t size);
+  virtual uint32_t GetRcvBufSize (void) const;
+  virtual void SetSegSize (uint32_t size);
+  virtual uint32_t GetSegSize (void) const;
+  virtual void SetInitialSSThresh (uint32_t threshold);
+  virtual uint32_t GetInitialSSThresh (void) const;
+  virtual void SetInitialCwnd (uint32_t cwnd);
+  virtual uint32_t GetInitialCwnd (void) const;
+  virtual void SetConnTimeout (Time timeout);
+  virtual Time GetConnTimeout (void) const;
+  virtual void SetConnCount (uint32_t count);
+  virtual uint32_t GetConnCount (void) const;
+  virtual void SetDelAckTimeout (Time timeout);
+  virtual Time GetDelAckTimeout (void) const;
+  virtual void SetDelAckMaxCount (uint32_t count);
+  virtual uint32_t GetDelAckMaxCount (void) const;
+  virtual void SetTcpNoDelay (bool noDelay);
+  virtual bool GetTcpNoDelay (void) const;
+  virtual void SetPersistTimeout (Time timeout);
+  virtual Time GetPersistTimeout (void) const;
+
 protected:
   Ptr<Node> CreateInternetNode ();
   Ptr<Node> CreateInternetNode6 ();
@@ -204,12 +232,24 @@ private:
   virtual void DoRun (void);
   virtual void DoTeardown (void);
   bool m_useIpv6;
+  uint32_t m_nodeId;
+
+  const char* m_netmask;
+  const char* m_ipaddr0;
+  const int   m_ipv6Prefix;
+  const char*  m_ipv6Addr;
+
+  Ptr<Ns3TcpSocketImpl> m_socket;
 };
 
 
 Ns3TcpSocketImplTest::Ns3TcpSocketImplTest (bool useIpv6, std::string name)
   : TestCase (name),
-    m_useIpv6 (useIpv6)
+    m_useIpv6 (useIpv6),
+    m_netmask ("255.255.255.0"),
+    m_ipaddr0 ("192.168.1.1"),
+    m_ipv6Prefix (64),
+    m_ipv6Addr ("2001:0100:f00d:cafe::1")
 {
 
 }
@@ -238,6 +278,9 @@ Ns3TcpSocketImplTest::CreateInternetNode ()
   //TCP
   Ptr<TcpL4Protocol> tcp = CreateObject<TcpL4Protocol> ();
   node->AggregateObject (tcp);
+
+  m_nodeId = node->GetId ();
+
   return node;
 }
 
@@ -265,6 +308,9 @@ Ns3TcpSocketImplTest::CreateInternetNode6 ()
   //TCP
   Ptr<TcpL4Protocol> tcp = CreateObject<TcpL4Protocol> ();
   node->AggregateObject (tcp);
+
+  m_nodeId = node->GetId();
+
   return node;
 }
 
@@ -302,35 +348,35 @@ Ns3TcpSocketImplTest::AddSimpleNetDevice (Ptr<Node> node, const char* ipaddr,
 void
 Ns3TcpSocketImplTest::SetupDefaultSim (void)
 {
-  const char* netmask = "255.255.255.0";
-  const char* ipaddr0 = "192.168.1.1";
-
   Ptr<Node> node0 = CreateInternetNode ();
 
-  Ptr<SimpleNetDevice> dev0 = AddSimpleNetDevice (node0, ipaddr0, netmask);
+  Ptr<SimpleNetDevice> dev0 = AddSimpleNetDevice (node0, m_ipaddr0, m_netmask);
 
   Ptr<SimpleChannel> channel = CreateObject<SimpleChannel> ();
   dev0->SetChannel (channel);
 
   Ptr<SocketFactory> sockFactory0 = node0->GetObject<TcpSocketFactory> ();
 
-  Ptr<Socket> server = sockFactory0->CreateSocket ();
+  Ptr<Socket> socket = sockFactory0->CreateSocket ();
+  m_socket = DynamicCast<Ns3TcpSocketImpl> (socket);
 }
 
 void
 Ns3TcpSocketImplTest::SetupDefaultSim6 (void)
 {
-  Ipv6Prefix prefix = Ipv6Prefix(64);
-  Ipv6Address ipaddr0 = Ipv6Address("2001:0100:f00d:cafe::1");
+  Ipv6Prefix prefix = Ipv6Prefix(m_ipv6Prefix);
+  Ipv6Address ipaddr = Ipv6Address(m_ipv6Addr);
+
   Ptr<Node> node0 = CreateInternetNode6 ();
-  Ptr<SimpleNetDevice> dev0 = AddSimpleNetDevice6 (node0, ipaddr0, prefix);
+  Ptr<SimpleNetDevice> dev0 = AddSimpleNetDevice6 (node0, ipaddr, prefix);
 
   Ptr<SimpleChannel> channel = CreateObject<SimpleChannel> ();
   dev0->SetChannel (channel);
 
   Ptr<SocketFactory> sockFactory0 = node0->GetObject<TcpSocketFactory> ();
 
-  Ptr<Socket> server = sockFactory0->CreateSocket ();
+  Ptr<Socket> socket = sockFactory0->CreateSocket ();
+  m_socket = DynamicCast<Ns3TcpSocketImpl> (socket);
 }
 
 void
@@ -344,6 +390,19 @@ Ns3TcpSocketImplTest::DoRun()
     {
       SetupDefaultSim ();
     }
+
+  NS_TEST_ASSERT_MSG_NE (m_socket, 0, "Cast from Socket to Ns3TcpSocketImpl failed");
+  NS_TEST_ASSERT_MSG_EQ (m_socket->GetSocketType(), NS3_SOCK_STREAM,
+                         "Different type of socket than expected");
+  NS_TEST_ASSERT_MSG_EQ (m_socket->GetNode()->GetId(), m_nodeId,
+                         "Different NodeID returned. Swapping of nodes?");
+
+  // TODO in ns3TcpSocketImpl
+  //int ret;
+  //Address addr;
+  //ret = m_socket->GetSockName(&addr);
+
+
 
 }
 
