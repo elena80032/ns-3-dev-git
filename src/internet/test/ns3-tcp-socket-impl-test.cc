@@ -19,7 +19,6 @@
 #include "ns3/test.h"
 #include "ns3/socket-factory.h"
 #include "ns3/tcp-socket-factory.h"
-#include "ns3/ns3-tcp-socket-impl.h"
 #include "ns3/simulator.h"
 #include "ns3/simple-channel.h"
 #include "ns3/simple-net-device.h"
@@ -43,16 +42,52 @@
 #include "ns3/icmpv6-l4-protocol.h"
 #include "ns3/udp-l4-protocol.h"
 #include "ns3/tcp-l4-protocol.h"
+#include "ns3/object-vector.h"
 
 #include <string>
+
+#define protected public
+#define private public
+
+#include "ns3/ns3-tcp-socket-impl.h"
 
 using namespace ns3;
 
 NS_LOG_COMPONENT_DEFINE ("Ns3TcpSocketImplTest");
 
+#define SAFELY_CALL_CB(name)   \
+        do                     \
+          {                    \
+            if (! name.IsNull())\
+              {                \
+                name ();       \
+              }                \
+          } while (false);
+
+#define SAFELY_CALL_AND_RETURN_CB(name, ret)   \
+        do                     \
+          {                    \
+            if (! name.IsNull())\
+              {                \
+                return name ();\
+              }                \
+            return ret;        \
+          } while (false)
+
 class Ns3TcpSocketImplDerived : public Ns3TcpSocketImpl
 {
 public:
+ static TypeId GetTypeId (void)
+ {
+   static TypeId tid = TypeId ("ns3::Ns3TcpSocketImplDerived")
+     .SetParent<Ns3TcpSocketImpl> ()
+     .AddConstructor <Ns3TcpSocketImplDerived> ()
+   ;
+   return tid;
+ }
+
+ Ns3TcpSocketImplDerived () : Ns3TcpSocketImpl () { }
+
  void SetShutdownSendCallback   (Callback<int> cb) { m_shutdownSendCb = cb; }
  void SetShutdownRecvCallback   (Callback<int> cb) { m_shutdownRecvCb = cb; }
  void SetSendCallback           (Callback<int> cb) { m_sendCb = cb; }
@@ -107,21 +142,63 @@ private:
 
 
 public:
- int ShutdownSend (void) { return m_shutdownSendCb (); }
- int ShutdownRecv (void) { return m_shutdownRecvCb (); }
+ int ShutdownSend (void) { SAFELY_CALL_AND_RETURN_CB (m_shutdownSendCb, 0); }
+ int ShutdownRecv (void) { SAFELY_CALL_AND_RETURN_CB (m_shutdownRecvCb, 0); }
 
- int Send (Ptr<Packet> p, uint32_t flags) { return m_sendCb (); }
- int SendTo (Ptr<Packet> p, uint32_t flags, const Address &toAddress) { return m_sendToCb (); }
+ int
+ Send (Ptr<Packet> p, uint32_t flags)
+ {
+   SAFELY_CALL_AND_RETURN_CB (m_sendCb, 0);
+ }
 
- Ptr<Packet> Recv    (uint32_t maxSize, uint32_t flags) { return m_recvCb (); }
- Ptr<Packet> RecvFrom(uint32_t maxSize, uint32_t flags,
-                      Address &fromAddress) { return m_recvFromCb ();}
- uint32_t GetTxAvailable  (void) const { return m_getTxAvailableCb (); }
- uint32_t GetRxAvailable  (void) const { return m_getRxAvailableCb (); }
+ int
+ SendTo (Ptr<Packet> p, uint32_t flags, const Address &toAddress)
+ {
+   SAFELY_CALL_AND_RETURN_CB (m_sendToCb, 0);
+ }
+
+ Ptr<Packet>
+ Recv (uint32_t maxSize, uint32_t flags)
+ {
+   SAFELY_CALL_AND_RETURN_CB (m_recvCb, 0);
+ }
+
+ Ptr<Packet>
+ RecvFrom (uint32_t maxSize, uint32_t flags, Address &fromAddress)
+ {
+   SAFELY_CALL_AND_RETURN_CB (m_recvFromCb, 0);
+ }
+
+ uint32_t
+ GetTxAvailable (void) const
+ {
+   SAFELY_CALL_AND_RETURN_CB (m_getTxAvailableCb, 0);
+ }
+
+ uint32_t
+ GetRxAvailable (void) const
+ {
+   SAFELY_CALL_AND_RETURN_CB (m_getRxAvailableCb, 0);
+ }
+
+ bool
+ SetAllowBroadcast (bool allowBroadcast)
+ {
+   return true;
+ }
+
+ bool
+ GetAllowBroadcast() const
+ {
+   return false;
+ }
 
 protected:
  void ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
-                 Ptr<Ipv4Interface> incomingInterface) { m_fordwardUpCb (); }
+                 Ptr<Ipv4Interface> incomingInterface)
+ {
+   SAFELY_CALL_CB (m_fordwardUpCb);
+ }
 
  void ForwardUp6 (Ptr<Packet> packet, Ipv6Header header, uint16_t port,
                   Ptr<Ipv6Interface> incomingInterface) { m_forwardUp6Cb (); }
@@ -144,102 +221,63 @@ protected:
  void SendRST    (void) { m_sendRSTCb (); }
  void SendFIN    (void) { m_sendFINCb (); }
  void SendFINACK (void) { m_sendFINACKCb (); }
+
+private:
+ virtual void SetSndBufSize (uint32_t size) {}
+ virtual uint32_t GetSndBufSize (void) const {return 0;}
+ virtual void SetRcvBufSize (uint32_t size) {}
+ virtual uint32_t GetRcvBufSize (void) const {return 0;}
+ virtual void SetSegSize (uint32_t size) {}
+ virtual uint32_t GetSegSize (void) const {return 0;}
+ virtual void SetInitialSSThresh (uint32_t threshold) {}
+ virtual uint32_t GetInitialSSThresh (void) const {return 0;}
+ virtual void SetInitialCwnd (uint32_t cwnd) {}
+ virtual uint32_t GetInitialCwnd (void) const {return 0;}
+ virtual void SetConnTimeout (Time timeout) {}
+ virtual Time GetConnTimeout (void) const {return Time ();}
+ virtual void SetConnCount (uint32_t count) {}
+ virtual uint32_t GetConnCount (void) const {return 0;}
+ virtual void SetDelAckTimeout (Time timeout){}
+ virtual Time GetDelAckTimeout (void) const {return Time();}
+ virtual void SetDelAckMaxCount (uint32_t count) {}
+ virtual uint32_t GetDelAckMaxCount (void) const {return 0;}
+ virtual void SetTcpNoDelay (bool noDelay) {}
+ virtual bool GetTcpNoDelay (void) const {return false;}
+ virtual void SetPersistTimeout (Time timeout) {}
+ virtual Time GetPersistTimeout (void) const {return Time ();}
 };
 
-class Ns3TcpSocketImplTest : public TestCase, public Ns3TcpSocketImpl
+class Ns3TcpSocketImplTest : public TestCase
 {
 public:
   Ns3TcpSocketImplTest (bool useIpv6, std::string name);
 
-  int ShutdownSend (void);
-  int ShutdownRecv (void);
-
-  int Send (Ptr<Packet> p, uint32_t flags) ;
-  int SendTo (Ptr<Packet> p, uint32_t flags, const Address &toAddress);
-
-  Ptr<Packet> Recv    (uint32_t maxSize, uint32_t flags);
-  Ptr<Packet> RecvFrom(uint32_t maxSize, uint32_t flags,
-                       Address &fromAddress);
-
-  virtual bool SetAllowBroadcast (bool allowBroadcast);
-  virtual bool GetAllowBroadcast () const;
-
-  uint32_t GetTxAvailable  (void) const;
-  uint32_t GetRxAvailable  (void) const;
-
- protected:
-  void ForwardUp (Ptr<Packet> packet, Ipv4Header header, uint16_t port,
-                  Ptr<Ipv4Interface> incomingInterface);
-
-  void ForwardUp6 (Ptr<Packet> packet, Ipv6Header header, uint16_t port,
-                   Ptr<Ipv6Interface> incomingInterface);
-
-  void ForwardIcmp (Ipv4Address icmpSource, uint8_t icmpTtl, uint8_t icmpType,
-                    uint8_t icmpCode, uint32_t icmpInfo);
-  void ForwardIcmp6 (Ipv6Address icmpSource, uint8_t icmpTtl, uint8_t icmpType,
-                    uint8_t icmpCode, uint32_t icmpInfo);
-
-  void Destroy (void);
-  void Destroy6 (void);
-  int DoConnect (void);
-  uint32_t GetRxBufferSize (void) const;
-  bool HasPendingData (void) const;
-  void CloseAndNotify (void);
-  void DeallocateEndPoint (void);
-
-  void CancelAllTimers (void);
-  void SendRST    (void);
-  void SendFIN    (void);
-  void SendFINACK (void);
-
-private:
-  virtual void SetSndBufSize (uint32_t size);
-  virtual uint32_t GetSndBufSize (void) const;
-  virtual void SetRcvBufSize (uint32_t size);
-  virtual uint32_t GetRcvBufSize (void) const;
-  virtual void SetSegSize (uint32_t size);
-  virtual uint32_t GetSegSize (void) const;
-  virtual void SetInitialSSThresh (uint32_t threshold);
-  virtual uint32_t GetInitialSSThresh (void) const;
-  virtual void SetInitialCwnd (uint32_t cwnd);
-  virtual uint32_t GetInitialCwnd (void) const;
-  virtual void SetConnTimeout (Time timeout);
-  virtual Time GetConnTimeout (void) const;
-  virtual void SetConnCount (uint32_t count);
-  virtual uint32_t GetConnCount (void) const;
-  virtual void SetDelAckTimeout (Time timeout);
-  virtual Time GetDelAckTimeout (void) const;
-  virtual void SetDelAckMaxCount (uint32_t count);
-  virtual uint32_t GetDelAckMaxCount (void) const;
-  virtual void SetTcpNoDelay (bool noDelay);
-  virtual bool GetTcpNoDelay (void) const;
-  virtual void SetPersistTimeout (Time timeout);
-  virtual Time GetPersistTimeout (void) const;
-
+  static Ptr<Node> CreateInternetNode ();
+  static Ptr<Node> CreateInternetNode6 ();
+  static Ptr<SimpleNetDevice> AddSimpleNetDevice (Ptr<Node> node, const char* ipaddr,
+                                                  const char* netmask);
+  static Ptr<SimpleNetDevice> AddSimpleNetDevice6 (Ptr<Node> node, Ipv6Address ipaddr,
+                                                  Ipv6Prefix prefix);
 protected:
-  Ptr<Node> CreateInternetNode ();
-  Ptr<Node> CreateInternetNode6 ();
 
   void SetupDefaultSim ();
-  void SetupDefaultSim6 ();
+  void SetupDefaultSim6();
 
-  Ptr<SimpleNetDevice> AddSimpleNetDevice (Ptr<Node> node, const char* ipaddr,
-                                           const char* netmask);
-  Ptr<SimpleNetDevice> AddSimpleNetDevice6 (Ptr<Node> node, Ipv6Address ipaddr,
-                                            Ipv6Prefix prefix);
+  void CheckBind ();
+  void CheckConnect ();
+
 
 private:
   virtual void DoRun (void);
-  virtual void DoTeardown (void);
-  bool m_useIpv6;
-  uint32_t m_nodeId;
+
+  bool     m_useIpv6;
 
   const char* m_netmask;
   const char* m_ipaddr0;
   const int   m_ipv6Prefix;
-  const char*  m_ipv6Addr;
+  const char* m_ipv6Addr;
 
-  Ptr<Ns3TcpSocketImpl> m_socket;
+  Ptr<Node> m_node;
 };
 
 
@@ -279,8 +317,6 @@ Ns3TcpSocketImplTest::CreateInternetNode ()
   Ptr<TcpL4Protocol> tcp = CreateObject<TcpL4Protocol> ();
   node->AggregateObject (tcp);
 
-  m_nodeId = node->GetId ();
-
   return node;
 }
 
@@ -308,8 +344,6 @@ Ns3TcpSocketImplTest::CreateInternetNode6 ()
   //TCP
   Ptr<TcpL4Protocol> tcp = CreateObject<TcpL4Protocol> ();
   node->AggregateObject (tcp);
-
-  m_nodeId = node->GetId();
 
   return node;
 }
@@ -346,19 +380,13 @@ Ns3TcpSocketImplTest::AddSimpleNetDevice (Ptr<Node> node, const char* ipaddr,
 }
 
 void
-Ns3TcpSocketImplTest::SetupDefaultSim (void)
+Ns3TcpSocketImplTest::SetupDefaultSim ()
 {
-  Ptr<Node> node0 = CreateInternetNode ();
-
-  Ptr<SimpleNetDevice> dev0 = AddSimpleNetDevice (node0, m_ipaddr0, m_netmask);
+  m_node = CreateInternetNode ();
+  Ptr<SimpleNetDevice> dev0 = AddSimpleNetDevice (m_node, m_ipaddr0, m_netmask);
 
   Ptr<SimpleChannel> channel = CreateObject<SimpleChannel> ();
   dev0->SetChannel (channel);
-
-  Ptr<SocketFactory> sockFactory0 = node0->GetObject<TcpSocketFactory> ();
-
-  Ptr<Socket> socket = sockFactory0->CreateSocket ();
-  m_socket = DynamicCast<Ns3TcpSocketImpl> (socket);
 }
 
 void
@@ -367,16 +395,11 @@ Ns3TcpSocketImplTest::SetupDefaultSim6 (void)
   Ipv6Prefix prefix = Ipv6Prefix(m_ipv6Prefix);
   Ipv6Address ipaddr = Ipv6Address(m_ipv6Addr);
 
-  Ptr<Node> node0 = CreateInternetNode6 ();
-  Ptr<SimpleNetDevice> dev0 = AddSimpleNetDevice6 (node0, ipaddr, prefix);
+  m_node = CreateInternetNode6 ();
+  Ptr<SimpleNetDevice> dev0 = AddSimpleNetDevice6 (m_node, ipaddr, prefix);
 
   Ptr<SimpleChannel> channel = CreateObject<SimpleChannel> ();
   dev0->SetChannel (channel);
-
-  Ptr<SocketFactory> sockFactory0 = node0->GetObject<TcpSocketFactory> ();
-
-  Ptr<Socket> socket = sockFactory0->CreateSocket ();
-  m_socket = DynamicCast<Ns3TcpSocketImpl> (socket);
 }
 
 void
@@ -391,19 +414,44 @@ Ns3TcpSocketImplTest::DoRun()
       SetupDefaultSim ();
     }
 
-  NS_TEST_ASSERT_MSG_NE (m_socket, 0, "Cast from Socket to Ns3TcpSocketImpl failed");
-  NS_TEST_ASSERT_MSG_EQ (m_socket->GetSocketType(), NS3_SOCK_STREAM,
+  Ptr<TcpL4Protocol> tcp = m_node->GetObject<TcpL4Protocol> ();
+  Ptr<Socket> s = tcp->CreateSocket (Ns3TcpSocketImplDerived::GetTypeId());
+
+  Ptr<Ns3TcpSocketImplDerived> socket = DynamicCast<Ns3TcpSocketImplDerived> (s);
+
+  NS_TEST_ASSERT_MSG_EQ (socket->GetSocketType(), Socket::NS3_SOCK_STREAM,
                          "Different type of socket than expected");
-  NS_TEST_ASSERT_MSG_EQ (m_socket->GetNode()->GetId(), m_nodeId,
+  NS_TEST_ASSERT_MSG_EQ (socket->GetNode()->GetId(), m_node->GetId (),
                          "Different NodeID returned. Swapping of nodes?");
+  NS_TEST_ASSERT_MSG_NE (socket, 0, "Can't cast to right type");
 
   // TODO in ns3TcpSocketImpl
   //int ret;
   //Address addr;
   //ret = m_socket->GetSockName(&addr);
 
+  CheckBind ();
+}
 
+void
+Ns3TcpSocketImplTest::CheckBind()
+{
+  Ptr<TcpL4Protocol> tcp = m_node->GetObject<TcpL4Protocol> ();
+  Ptr<Socket> s = tcp->CreateSocket (Ns3TcpSocketImplDerived::GetTypeId());
 
+  Ptr<Ns3TcpSocketImplDerived> socket = DynamicCast<Ns3TcpSocketImplDerived> (s);
+
+  int ret = socket->Bind();
+  NS_TEST_ASSERT_MSG_GT_OR_EQ (ret, 0, "Bind failed with a valid address");
+
+  if (ret >= 0)
+    {
+      NS_TEST_ASSERT_MSG_NE (socket->m_endPoint, 0,
+                             "Endpoint is 0 but bind returned all ok");
+      ObjectVectorValue v;
+      tcp->GetAttribute("SocketList", v);
+      NS_TEST_ASSERT_MSG_EQ (v.GetN(), 1, "More TCP in the socket list than expected");
+    }
 }
 
 static class Ns3TcpSocketImplTestSuite : public TestSuite
