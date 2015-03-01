@@ -74,6 +74,11 @@ TcpL4Protocol::GetTypeId (void)
                    TypeIdValue (RttMeanDeviation::GetTypeId ()),
                    MakeTypeIdAccessor (&TcpL4Protocol::m_rttTypeId),
                    MakeTypeIdChecker ())
+    .AddAttribute ("SocketType",
+                   "Socket type of TCP objects.",
+                   TypeIdValue (),
+                   MakeTypeIdAccessor (&TcpL4Protocol::m_socketTypeId),
+                   MakeTypeIdChecker ())
     .AddAttribute ("SocketList", "The list of sockets associated to this protocol.",
                    ObjectVectorValue (),
                    MakeObjectVectorAccessor (&TcpL4Protocol::m_sockets),
