@@ -43,7 +43,6 @@
 #include "rtt-estimator.h"
 #include "ns3-tcp-socket-impl.h"
 
-#include <vector>
 #include <sstream>
 #include <iomanip>
 
@@ -79,10 +78,6 @@ TcpL4Protocol::GetTypeId (void)
                    TypeIdValue (),
                    MakeTypeIdAccessor (&TcpL4Protocol::m_socketTypeId),
                    MakeTypeIdChecker ())
-    .AddAttribute ("SocketList", "The list of sockets associated to this protocol.",
-                   ObjectVectorValue (),
-                   MakeObjectVectorAccessor (&TcpL4Protocol::m_sockets),
-                   MakeObjectVectorChecker<Ns3TcpSocketImpl> ())
   ;
   return tid;
 }
@@ -156,7 +151,6 @@ void
 TcpL4Protocol::DoDispose (void)
 {
   NS_LOG_FUNCTION_NOARGS ();
-  m_sockets.clear ();
 
   if (m_endPoints != 0)
     {
@@ -189,7 +183,6 @@ TcpL4Protocol::CreateSocket (TypeId socketTypeId)
   socket->SetNode (m_node);
   socket->SetTcp (this);
   socket->SetRtt (rtt);
-  m_sockets.push_back (socket);
   return socket;
 }
 

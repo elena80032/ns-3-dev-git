@@ -39,7 +39,6 @@ class TcpHeader;
 class Ipv4EndPointDemux;
 class Ipv6EndPointDemux;
 class Ipv4Interface;
-class Ns3TcpSocketImpl;
 class Ipv4EndPoint;
 class Ipv6EndPoint;
 
@@ -233,7 +232,6 @@ private:
   TypeId m_rttTypeId; //!< The RTT Estimator TypeId
   TypeId m_socketTypeId; //!< The socket TypeId
 private:
-  friend class Ns3TcpSocketImpl;
   void SendPacket (Ptr<Packet>, const TcpHeader &,
                    Ipv4Address, Ipv4Address, Ptr<NetDevice> oif = 0);
   void SendPacket (Ptr<Packet>, const TcpHeader &,
@@ -253,7 +251,6 @@ private:
    */
   TcpL4Protocol &operator = (const TcpL4Protocol &);
 
-  std::vector<Ptr<Ns3TcpSocketImpl> > m_sockets;      //!< list of sockets
   IpL4Protocol::DownTargetCallback m_downTarget;   //!< Callback to send packets over IPv4
   IpL4Protocol::DownTargetCallback6 m_downTarget6; //!< Callback to send packets over IPv6
 };
