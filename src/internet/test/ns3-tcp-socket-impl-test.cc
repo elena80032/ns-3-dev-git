@@ -33,6 +33,8 @@
 #include "ns3/inet6-socket-address.h"
 #include "ns3/uinteger.h"
 #include "ns3/log.h"
+#include "ns3/global-value.h"
+#include "ns3/string.h"
 
 #include "ns3/ipv4-end-point.h"
 #include "ns3/arp-l3-protocol.h"
@@ -101,8 +103,6 @@ public:
  void SetForwardUp6Callback     (Callback<void> cb) { m_forwardUp6Cb = cb; }
  void SetForwardIcmpCallback    (Callback<void> cb) { m_forwardIcmpCb = cb;}
  void SetForwardIcmp6Callback   (Callback<void> cb) { m_forwardIcmp6Cb = cb; }
- void SetDestroyCallback        (Callback<void> cb) { m_destroyCb = cb; }
- void SetDestroy6Callback       (Callback<void> cb) { m_destroy6Cb = cb; }
  void SetDoConnectCallback      (Callback<int> cb) { m_doConnectCb = cb; }
 
  void SetGetRxBufferSizeCallback    (Callback<uint32_t> cb) { m_getRxBufferSizeCb = cb; }
@@ -128,8 +128,6 @@ private:
  Callback<void> m_forwardUp6Cb;
  Callback<void> m_forwardIcmpCb;
  Callback<void> m_forwardIcmp6Cb;
- Callback<void> m_destroyCb;
- Callback<void> m_destroy6Cb;
  Callback<int> m_doConnectCb;
  Callback<uint32_t> m_getRxBufferSizeCb;
  Callback<bool> m_hasPendingDataCb;
@@ -216,16 +214,6 @@ protected:
                    uint8_t icmpCode, uint32_t icmpInfo)
  {
    SAFELY_CALL_CB (m_forwardIcmp6Cb);
- }
-
- void Destroy (void)
- {
-   SAFELY_CALL_CB (m_destroyCb);
- }
-
- void Destroy6 (void)
- {
-   SAFELY_CALL_CB (m_destroy6Cb);
  }
 
  int DoConnect (void)
@@ -319,12 +307,10 @@ protected:
 
   void ForwardUpCb (void);
   void ForwardIcmpCb (void);
-  void DestroyCb (void);
 
 protected:
   bool m_forwardUpCbInvoked;
   bool m_forwardIcmpCbInvoked;
-  bool m_destroyCbInvoked;
 
 private:
   virtual void DoRun (void);
@@ -344,7 +330,6 @@ Ns3TcpSocketImplTest::Ns3TcpSocketImplTest (bool useIpv6, std::string name)
   : TestCase (name),
     m_forwardUpCbInvoked (false),
     m_forwardIcmpCbInvoked (false),
-    m_destroyCbInvoked (false),
     m_useIpv6 (useIpv6),
     m_netmask ("255.255.255.0"),
     m_ipaddr0 ("192.168.1.1"),
@@ -515,12 +500,6 @@ Ns3TcpSocketImplTest::ForwardIcmpCb()
 }
 
 void
-Ns3TcpSocketImplTest::DestroyCb()
-{
-  m_destroyCbInvoked = true;
-}
-
-void
 Ns3TcpSocketImplTest::CheckBind()
 {
   Ptr<TcpL4Protocol> tcp = m_node->GetObject<TcpL4Protocol> ();
@@ -535,18 +514,11 @@ Ns3TcpSocketImplTest::CheckBind()
     {
       NS_TEST_ASSERT_MSG_NE (socket->m_endPoint, 0,
                              "Endpoint is 0 but bind returned all ok");
-      ObjectVectorValue v;
-      tcp->GetAttribute("SocketList", v);
-
-      NS_TEST_ASSERT_MSG_EQ (v.GetN(), 1,
-                             "More TCP in the socket list than expected");
     }
 
   socket->SetForwardUpCallback  (MakeCallback(&Ns3TcpSocketImplTest::ForwardUpCb,
                                               this));
   socket->SetForwardIcmpCallback(MakeCallback (&Ns3TcpSocketImplTest::ForwardIcmpCb,
-                                               this));
-  socket->SetDestroyCallback    (MakeCallback (&Ns3TcpSocketImplTest::DestroyCb,
                                                this));
 
   Ptr<Packet> p = 0;
@@ -555,20 +527,16 @@ Ns3TcpSocketImplTest::CheckBind()
   Ptr<Ipv4Interface> a = 0;
   Ipv4Address b;
 
-  socket->m_endPoint->ForwardUp(p, h, sport, a);
 
-  //NS_TEST_ASSERT_MSG_EQ (m_forwardUpCbInvoked, true,
-  //                       "ForwardUp callback on Tcp socket not invoked");
+  socket->m_endPoint->ForwardUp (p, h, sport, a);
 
-  //socket->m_endPoint->ForwardIcmp(b, 0, 0, 0, 0);
+  NS_TEST_ASSERT_MSG_EQ (m_forwardUpCbInvoked, true,
+                         "ForwardUp callback on Tcp socket not invoked");
 
-  //NS_TEST_ASSERT_MSG_EQ (m_forwardIcmpCbInvoked, true,
-  //                       "ForwardIcmp callback on Tcp socket not invoked");
+  socket->m_endPoint->ForwardIcmp (b, 0, 0, 0, 0);
 
-  //socket->m_endPoint = 0;
-  //
-  //NS_TEST_ASSERT_MSG_EQ (m_destroyCbInvoked, true,
-  //                       "Destroy callback on Tcp socket not invoked");
+  NS_TEST_ASSERT_MSG_EQ (m_forwardIcmpCbInvoked, true,
+                         "ForwardIcmp callback on Tcp socket not invoked");
 }
 
 static class Ns3TcpSocketImplTestSuite : public TestSuite
