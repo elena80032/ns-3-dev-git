@@ -166,7 +166,7 @@ protected:
    * This is a callback function configured to m_endpoint in
    * SetupCallback(), invoked when the endpoint is destroyed.
    */
-  virtual void Destroy (void) = 0;
+  virtual void Destroy (void);
 
   /**
    * \brief Kill this socket by zeroing its attributes (IPv6)
@@ -174,7 +174,7 @@ protected:
    * This is a callback function configured to m_endpoint in
    * SetupCallback(), invoked when the endpoint is destroyed.
    */
-  virtual void Destroy6 (void) = 0;
+  virtual void Destroy6 (void);
 
   // Helper functions: Connection set up
 

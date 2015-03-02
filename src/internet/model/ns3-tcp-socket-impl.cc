@@ -64,28 +64,20 @@ Ns3TcpSocketImpl::Ns3TcpSocketImpl()
 Ns3TcpSocketImpl::~Ns3TcpSocketImpl()
 {
   NS_LOG_FUNCTION (this);
-  m_node = 0;
   if (m_endPoint != 0)
     {
       NS_ASSERT (m_tcp != 0);
-      /*
-       * Upon Bind, an Ipv4Endpoint is allocated and set to m_endPoint, and
-       * DestroyCallback is set to TcpSocketBase::Destroy. If we called
-       * m_tcp->DeAllocate, it wil destroy its Ipv4EndpointDemux::DeAllocate,
-       * which in turn destroys my m_endPoint, and in turn invokes
-       * TcpSocketBase::Destroy to nullify m_node, m_endPoint, and m_tcp.
-       */
       NS_ASSERT (m_endPoint != 0);
       m_tcp->DeAllocate (m_endPoint);
-      NS_ASSERT (m_endPoint == 0);
     }
   if (m_endPoint6 != 0)
     {
       NS_ASSERT (m_tcp != 0);
       NS_ASSERT (m_endPoint6 != 0);
       m_tcp->DeAllocate (m_endPoint6);
-      NS_ASSERT (m_endPoint6 == 0);
     }
+
+  m_node = 0;
   m_tcp = 0;
 }
 
@@ -197,12 +189,6 @@ Ns3TcpSocketImpl::Bind (void)
       return -1;
     }
 
-  if (std::find(m_tcp->m_sockets.begin(), m_tcp->m_sockets.end(), this)
-      == m_tcp->m_sockets.end())
-    {
-      m_tcp->m_sockets.push_back (this);
-    }
-
   return SetupCallback ();
 }
 
@@ -220,11 +206,6 @@ Ns3TcpSocketImpl::Bind6 (void)
       return -1;
     }
 
-  if (std::find(m_tcp->m_sockets.begin(), m_tcp->m_sockets.end(), this)
-      == m_tcp->m_sockets.end())
-    {
-      m_tcp->m_sockets.push_back (this);
-    }
   return SetupCallback ();
 }
 
@@ -331,12 +312,6 @@ Ns3TcpSocketImpl::Bind (const Address &address)
     {
       m_errno = ERROR_INVAL;
       return -1;
-    }
-
-  if (std::find(m_tcp->m_sockets.begin(), m_tcp->m_sockets.end(), this) ==
-      m_tcp->m_sockets.end())
-    {
-      m_tcp->m_sockets.push_back (this);
     }
 
   NS_LOG_LOGIC ("Ns3TcpSocketImpl " << this << " got an endpoint: " << m_endPoint);
@@ -594,12 +569,6 @@ Ns3TcpSocketImpl::DeallocateEndPoint (void)
       m_endPoint->SetDestroyCallback (MakeNullCallback<void> ());
       m_tcp->DeAllocate (m_endPoint);
       m_endPoint = 0;
-      std::vector<Ptr<Ns3TcpSocketImpl> >::iterator it
-        = std::find (m_tcp->m_sockets.begin (), m_tcp->m_sockets.end (), this);
-      if (it != m_tcp->m_sockets.end ())
-        {
-          m_tcp->m_sockets.erase (it);
-        }
     }
   else if (m_endPoint6 != 0)
     {
@@ -607,13 +576,23 @@ Ns3TcpSocketImpl::DeallocateEndPoint (void)
       m_endPoint6->SetDestroyCallback (MakeNullCallback<void> ());
       m_tcp->DeAllocate (m_endPoint6);
       m_endPoint6 = 0;
-      std::vector<Ptr<Ns3TcpSocketImpl> >::iterator it
-        = std::find (m_tcp->m_sockets.begin (), m_tcp->m_sockets.end (), this);
-      if (it != m_tcp->m_sockets.end ())
-        {
-          m_tcp->m_sockets.erase (it);
-        }
     }
+}
+
+void
+Ns3TcpSocketImpl::Destroy (void)
+{
+  m_endPoint = 0;
+
+  CancelAllTimers ();
+}
+
+void
+Ns3TcpSocketImpl::Destroy6 (void)
+{
+  m_endPoint6 = 0;
+
+  CancelAllTimers();
 }
 
 } // namespace ns-3
