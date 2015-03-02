@@ -201,26 +201,77 @@ protected:
  }
 
  void ForwardUp6 (Ptr<Packet> packet, Ipv6Header header, uint16_t port,
-                  Ptr<Ipv6Interface> incomingInterface) { m_forwardUp6Cb (); }
+                  Ptr<Ipv6Interface> incomingInterface)
+ {
+   SAFELY_CALL_CB (m_forwardUp6Cb);
+ }
 
  void ForwardIcmp (Ipv4Address icmpSource, uint8_t icmpTtl, uint8_t icmpType,
-                   uint8_t icmpCode, uint32_t icmpInfo) { m_forwardIcmpCb (); }
+                   uint8_t icmpCode, uint32_t icmpInfo)
+ {
+   SAFELY_CALL_CB (m_forwardIcmpCb);
+ }
+
  void ForwardIcmp6 (Ipv6Address icmpSource, uint8_t icmpTtl, uint8_t icmpType,
-                   uint8_t icmpCode, uint32_t icmpInfo) { m_forwardIcmp6Cb (); }
+                   uint8_t icmpCode, uint32_t icmpInfo)
+ {
+   SAFELY_CALL_CB (m_forwardIcmp6Cb);
+ }
 
- void Destroy (void) { m_destroyCb (); }
- void Destroy6 (void) { m_destroy6Cb (); }
+ void Destroy (void)
+ {
+   SAFELY_CALL_CB (m_destroyCb);
+ }
 
- int DoConnect (void) { return m_doConnectCb (); }
- uint32_t GetRxBufferSize (void) const { return m_getRxBufferSizeCb (); }
- bool HasPendingData (void) const { return m_hasPendingDataCb (); }
- void CloseAndNotify (void) { m_closeAndNotifyCb (); }
- void DeallocateEndPoint (void) { m_deallocateEndPointCb (); }
+ void Destroy6 (void)
+ {
+   SAFELY_CALL_CB (m_destroy6Cb);
+ }
 
- void CancelAllTimers (void) { m_cancelAllTimersCb (); }
- void SendRST    (void) { m_sendRSTCb (); }
- void SendFIN    (void) { m_sendFINCb (); }
- void SendFINACK (void) { m_sendFINACKCb (); }
+ int DoConnect (void)
+ {
+   SAFELY_CALL_AND_RETURN_CB (m_doConnectCb, 0);
+ }
+
+ uint32_t GetRxBufferSize (void) const
+ {
+   SAFELY_CALL_AND_RETURN_CB (m_getRxBufferSizeCb, 0);
+ }
+
+ bool HasPendingData (void) const
+ {
+   SAFELY_CALL_AND_RETURN_CB (m_hasPendingDataCb, false);
+ }
+
+ void CloseAndNotify (void)
+ {
+   SAFELY_CALL_CB (m_closeAndNotifyCb);
+ }
+
+ void DeallocateEndPoint (void)
+ {
+   SAFELY_CALL_CB (m_deallocateEndPointCb);
+ }
+
+ void CancelAllTimers (void)
+ {
+   SAFELY_CALL_CB (m_cancelAllTimersCb);
+ }
+
+ void SendRST    (void)
+ {
+   SAFELY_CALL_CB (m_sendRSTCb);
+ }
+
+ void SendFIN    (void)
+ {
+   SAFELY_CALL_CB (m_sendFINCb);
+ }
+
+ void SendFINACK (void)
+ {
+   SAFELY_CALL_CB (m_sendFINACKCb);
+ }
 
 private:
  virtual void SetSndBufSize (uint32_t size) {}
@@ -266,6 +317,14 @@ protected:
   void CheckBind ();
   void CheckConnect ();
 
+  void ForwardUpCb (void);
+  void ForwardIcmpCb (void);
+  void DestroyCb (void);
+
+protected:
+  bool m_forwardUpCbInvoked;
+  bool m_forwardIcmpCbInvoked;
+  bool m_destroyCbInvoked;
 
 private:
   virtual void DoRun (void);
@@ -283,6 +342,9 @@ private:
 
 Ns3TcpSocketImplTest::Ns3TcpSocketImplTest (bool useIpv6, std::string name)
   : TestCase (name),
+    m_forwardUpCbInvoked (false),
+    m_forwardIcmpCbInvoked (false),
+    m_destroyCbInvoked (false),
     m_useIpv6 (useIpv6),
     m_netmask ("255.255.255.0"),
     m_ipaddr0 ("192.168.1.1"),
@@ -430,7 +492,32 @@ Ns3TcpSocketImplTest::DoRun()
   //Address addr;
   //ret = m_socket->GetSockName(&addr);
 
-  CheckBind ();
+  if (m_useIpv6 == true)
+    {
+
+    }
+  else
+    {
+      CheckBind ();
+    }
+}
+
+void
+Ns3TcpSocketImplTest::ForwardUpCb()
+{
+  m_forwardUpCbInvoked = true;
+}
+
+void
+Ns3TcpSocketImplTest::ForwardIcmpCb()
+{
+  m_forwardIcmpCbInvoked = true;
+}
+
+void
+Ns3TcpSocketImplTest::DestroyCb()
+{
+  m_destroyCbInvoked = true;
 }
 
 void
@@ -450,8 +537,38 @@ Ns3TcpSocketImplTest::CheckBind()
                              "Endpoint is 0 but bind returned all ok");
       ObjectVectorValue v;
       tcp->GetAttribute("SocketList", v);
-      NS_TEST_ASSERT_MSG_EQ (v.GetN(), 1, "More TCP in the socket list than expected");
+
+      NS_TEST_ASSERT_MSG_EQ (v.GetN(), 1,
+                             "More TCP in the socket list than expected");
     }
+
+  socket->SetForwardUpCallback  (MakeCallback(&Ns3TcpSocketImplTest::ForwardUpCb,
+                                              this));
+  socket->SetForwardIcmpCallback(MakeCallback (&Ns3TcpSocketImplTest::ForwardIcmpCb,
+                                               this));
+  socket->SetDestroyCallback    (MakeCallback (&Ns3TcpSocketImplTest::DestroyCb,
+                                               this));
+
+  Ptr<Packet> p = 0;
+  Ipv4Header h;
+  uint16_t sport = 0;
+  Ptr<Ipv4Interface> a = 0;
+  Ipv4Address b;
+
+  socket->m_endPoint->ForwardUp(p, h, sport, a);
+
+  //NS_TEST_ASSERT_MSG_EQ (m_forwardUpCbInvoked, true,
+  //                       "ForwardUp callback on Tcp socket not invoked");
+
+  //socket->m_endPoint->ForwardIcmp(b, 0, 0, 0, 0);
+
+  //NS_TEST_ASSERT_MSG_EQ (m_forwardIcmpCbInvoked, true,
+  //                       "ForwardIcmp callback on Tcp socket not invoked");
+
+  //socket->m_endPoint = 0;
+  //
+  //NS_TEST_ASSERT_MSG_EQ (m_destroyCbInvoked, true,
+  //                       "Destroy callback on Tcp socket not invoked");
 }
 
 static class Ns3TcpSocketImplTestSuite : public TestSuite
