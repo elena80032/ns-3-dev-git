@@ -63,7 +63,30 @@ Ns3TcpSocketImpl::Ns3TcpSocketImpl()
 
 Ns3TcpSocketImpl::~Ns3TcpSocketImpl()
 {
-
+  NS_LOG_FUNCTION (this);
+  m_node = 0;
+  if (m_endPoint != 0)
+    {
+      NS_ASSERT (m_tcp != 0);
+      /*
+       * Upon Bind, an Ipv4Endpoint is allocated and set to m_endPoint, and
+       * DestroyCallback is set to TcpSocketBase::Destroy. If we called
+       * m_tcp->DeAllocate, it wil destroy its Ipv4EndpointDemux::DeAllocate,
+       * which in turn destroys my m_endPoint, and in turn invokes
+       * TcpSocketBase::Destroy to nullify m_node, m_endPoint, and m_tcp.
+       */
+      NS_ASSERT (m_endPoint != 0);
+      m_tcp->DeAllocate (m_endPoint);
+      NS_ASSERT (m_endPoint == 0);
+    }
+  if (m_endPoint6 != 0)
+    {
+      NS_ASSERT (m_tcp != 0);
+      NS_ASSERT (m_endPoint6 != 0);
+      m_tcp->DeAllocate (m_endPoint6);
+      NS_ASSERT (m_endPoint6 == 0);
+    }
+  m_tcp = 0;
 }
 
 void
