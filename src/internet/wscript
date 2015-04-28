@@ -109,6 +109,7 @@ def build(bld):
         'model/ip-l4-protocol.cc',
         'model/udp-header.cc',
         'model/tcp-header.cc',
+        'model/dccp-header.cc',
         'model/ipv4-interface.cc',
         'model/ipv4-l3-protocol.cc',
         'model/ipv4-end-point.cc',
@@ -256,6 +257,7 @@ def build(bld):
     headers.source = [
         'model/udp-header.h',
         'model/tcp-header.h',
+        'model/dccp-header.h',
         'model/tcp-option.h',
         'model/icmpv4.h',
         'model/icmpv6-header.h',
