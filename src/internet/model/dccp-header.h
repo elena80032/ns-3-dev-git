@@ -27,6 +27,9 @@ public:
     uint8_t GetReserved () const;
     SequenceNumber16 GetSequenceNumberHigh () const;
     SequenceNumber32 GetSequenceNumberLow () const;
+    uint16_t GetReservedAck () const; //Reserved ack subheader
+    SequenceNumber16 GetAcknowloedgeNumberHigh () const;
+    SequenceNumber32 GetAcknowloedgeNumberLow () const;
 
   //Setters
     void SetDataOffset (uint8_t dataOffset);
@@ -38,15 +41,20 @@ public:
     void SetReserved (uint8_t Reserved);
     void SetSequenceNumberHigh (SequenceNumber16 SequenceNumberHigh);
     void SetSequenceNumberLow (SequenceNumber32 SequenceNumberLow);
+    void SetReservedAck (uint16_t ReservedAck);
+    void SetAcknowloedgeNumberHigh (SequenceNumber16 AcknowloedgeNumberHigh);
+    void SetAcknowloedgeNumberLow (SequenceNumber32 AcknowloedgeNumberLow);
 
 private:
-    uint16_t m_sourcePort;      //!< Source port
-    uint16_t m_destinationPort; //!< Destination port
-
+    uint16_t m_sourcePort;
+    uint16_t m_destinationPort;
+    uint16_t m_checksum;
     uint8_t m_dataOffset;
-    uint8_t m_CCVal_CsCov; //!< CCVal and CsCov
-    uint32_t m_RTXRSn; //!< if (X == 1) Res + Type + X + Reserved + Sequence number high if (X == 0) Res + Type + X + Sequence number
-    SequenceNumber32 m_sequenceNumberLow;  //!< Sequence number Low bits
+    uint8_t m_CCVal_CsCov;
+    uint32_t m_RTXRSn;
+    SequenceNumber32 m_SequenceNumberLow;
+    uint16_t m_ReservedAcknwledgment; // Reserved + ack low (X == 1), Reserved + ack high (X == 0)
+    SequenceNumber32 m_AcknowledgeLow;
   };
 }
 #endif // DCCPHEADER_H

@@ -5,31 +5,33 @@ namespace ns3 {
 
 DccpHeader::DccpHeader()
   :
-  m_dataOffset(0),
-  m_CCVal_CsCov(0),
-  m_RTXRSn(0),
-  m_sourcePort(0),
-  m_destinationPort(0),
-  m_sequenceNumberLow(0)
-
+    m_sourcePort(0),
+    m_destinationPort(0),
+    m_checksum(0),
+    m_dataOffset(0),
+    m_CCVal_CsCov(0),
+    m_RTXRSn(0),
+    m_SequenceNumberLow(0),
+    m_ReservedAcknwledgment(0),
+    m_AcknowledgeLow(0)
 {
 }
 
 DccpHeader::~DccpHeader ()
 {
 }
-/*
+
 //-----------------------------------------------------------------------------Serialize
 uint32_t
 DccpHeader::GetSerializedSize (void) const
 {
   if (GetX())
     {
-      return 16;
+      return 24;
     }
   else
     {
-      return 12;
+      return 16;
     }
 }
 
@@ -63,13 +65,12 @@ DccpHeader::Serialize (Buffer::Iterator start) const
       i.WriteU16 (m_checksum);
     }
   */
-/*
   i.WriteU8 (m_checksum);
 
   i.WriteHtonU32(m_RTXRSn);
   if (GetX())
   {
-      i.WriteHtonU32(m_sequenceNumberLow);
+      i.WriteHtonU32(m_SequenceNumberLow.GetValue ());
   }
 }
 
@@ -95,11 +96,10 @@ DccpHeader::Deserialize (Buffer::Iterator start)
       m_goodChecksum = (checksum == 0);
     }
   */
-/*
   m_RTXRSn = i.ReadNtohU32();
   if (GetX())
   {
-      m_sequenceNumberLow = i.ReadNtohU32();
+      m_SequenceNumberLow = SequenceNumber32(i.ReadNtohU32());
   }
 
   return GetSerializedSize ();
@@ -151,7 +151,7 @@ DccpHeader::GetReserved () const
 SequenceNumber16
 DccpHeader::GetSequenceNumberHigh () const
 {
-  return m_RTXRSn & 0x0000ffff;
+  return SequenceNumber16(m_RTXRSn & 0x0000ffff);
 }
 
 SequenceNumber32
@@ -159,12 +159,48 @@ DccpHeader::GetSequenceNumberLow () const
 {
   if (GetX())
     {
-      return m_sequenceNumberLow;
+      return m_SequenceNumberLow;
     }
   else
     {
-      return m_RTXRSn & 0x00ffffff;
+      return SequenceNumber32(m_RTXRSn & 0x00ffffff);
     }
+}
+
+uint16_t
+DccpHeader::GetReservedAck () const
+{
+  if (GetX())
+    {
+      return (m_ReservedAcknwledgment & 0xffff0000) >> 16;
+    }
+  else
+    {
+      return (m_ReservedAcknwledgment & 0xff000000) >> 24;
+    }
+}
+
+SequenceNumber16
+DccpHeader::GetAcknowloedgeNumberHigh () const
+{
+  if (GetX())
+  {
+      return SequenceNumber16((m_ReservedAcknwledgment & 0x0000ffff));
+  }
+  return SequenceNumber16(0);
+}
+
+SequenceNumber32
+DccpHeader::GetAcknowloedgeNumberLow () const
+{
+  if (GetX())
+  {
+      return m_AcknowledgeLow;
+  }
+  else
+  {
+      return SequenceNumber32((m_ReservedAcknwledgment & 0x00ffffff));
+  }
 }
 
 //------------------------------------------------------------------------------Setters
@@ -226,7 +262,7 @@ void
 DccpHeader::SetSequenceNumberHigh (SequenceNumber16 SequenceNumberHigh)
 {
   uint32_t temp = m_RTXRSn & 0xffff0000;
-  m_RTXRSn = SequenceNumberHigh;
+  m_RTXRSn = SequenceNumberHigh.GetValue();
   m_RTXRSn |= temp;
 }
 
@@ -235,14 +271,57 @@ DccpHeader::SetSequenceNumberLow (SequenceNumber32 SequenceNumberLow)
 {
   if (GetX())
     {
-      m_sequenceNumberLow = SequenceNumberLow;
+      m_SequenceNumberLow = SequenceNumberLow;
     }
   else
     {
       uint32_t temp = m_RTXRSn & 0xff000000;
-      m_RTXRSn = SequenceNumberLow & 0x00ffffff;
+      m_RTXRSn = SequenceNumberLow.GetValue() & 0x00ffffff;
       m_RTXRSn |= temp;
     }
 }
-*/
+
+void
+DccpHeader::SetReservedAck (uint16_t ReservedAck)
+{
+  if (GetX())
+    {
+      uint32_t temp = m_ReservedAcknwledgment & 0x0000ffff;
+      m_ReservedAcknwledgment = (ReservedAck << 16);
+      m_ReservedAcknwledgment |= temp;
+    }
+  else
+    {
+      uint32_t temp = m_ReservedAcknwledgment & 0x00ffffff;
+      m_ReservedAcknwledgment = (ReservedAck & 0x00ff) << 24;
+      m_ReservedAcknwledgment |= temp;
+    }
+}
+
+void
+DccpHeader::SetAcknowloedgeNumberHigh (SequenceNumber16 AcknowloedgeNumberHigh)
+{
+  if (GetX())
+  {
+      uint32_t temp = m_ReservedAcknwledgment & 0xffff0000;
+      m_ReservedAcknwledgment = AcknowloedgeNumberHigh.GetValue();
+      m_ReservedAcknwledgment |= temp;
+  }
+}
+
+void
+DccpHeader::SetAcknowloedgeNumberLow (SequenceNumber32 AcknowloedgeNumberLow)
+{
+  if (GetX())
+    {
+      m_AcknowledgeLow = AcknowloedgeNumberLow;
+    }
+  else
+    {
+      uint32_t temp = m_ReservedAcknwledgment & 0xff000000;
+      m_ReservedAcknwledgment = (AcknowloedgeNumberLow.GetValue() & 0x00ffffff);
+      m_ReservedAcknwledgment |= temp;
+    }
+}
+
 } // namespace ns3
