@@ -109,7 +109,6 @@ def build(bld):
         'model/ip-l4-protocol.cc',
         'model/udp-header.cc',
         'model/tcp-header.cc',
-        'model/dccp-header.cc',
         'model/ipv4-interface.cc',
         'model/ipv4-l3-protocol.cc',
         'model/ipv4-end-point.cc',
@@ -208,6 +207,7 @@ def build(bld):
         'model/ripng.cc',
         'model/ripng-header.cc',
         'helper/ripng-helper.cc',
+        'model/dccp-header.cc',
         ]
 
     internet_test = bld.create_ns3_module_test_library('internet')
@@ -244,6 +244,7 @@ def build(bld):
      	'test/ipv6-address-helper-test-suite.cc',
         'test/rtt-test.cc',
         'test/codel-queue-test-suite.cc',
+        'test/dccp-header-test.cc',
         ]
     privateheaders = bld(features='ns3privateheader')
     privateheaders.module = 'internet'
@@ -257,7 +258,6 @@ def build(bld):
     headers.source = [
         'model/udp-header.h',
         'model/tcp-header.h',
-        'model/dccp-header.h',
         'model/tcp-option.h',
         'model/icmpv4.h',
         'model/icmpv6-header.h',
@@ -342,6 +342,7 @@ def build(bld):
         'model/ripng.h',
         'model/ripng-header.h',
         'helper/ripng-helper.h',
+        'model/dccp-header.h',
        ]
 
     if bld.env['NSC_ENABLED']:

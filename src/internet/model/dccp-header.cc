@@ -27,11 +27,11 @@ DccpHeader::GetSerializedSize (void) const
 {
   if (GetX())
     {
-      return 24;
+      return 16;
     }
   else
     {
-      return 16;
+      return 12;
     }
 }
 
@@ -39,7 +39,6 @@ void
 DccpHeader::Serialize (Buffer::Iterator start) const
 {
   Buffer::Iterator i = start;
-
   i.WriteHtonU16 (m_sourcePort);
   i.WriteHtonU16 (m_destinationPort);
   i.WriteU8(m_dataOffset);
@@ -65,7 +64,7 @@ DccpHeader::Serialize (Buffer::Iterator start) const
       i.WriteU16 (m_checksum);
     }
   */
-  i.WriteU8 (m_checksum);
+  i.WriteU16 (m_checksum);
 
   i.WriteHtonU32(m_RTXRSn);
   if (GetX())
@@ -78,13 +77,14 @@ uint32_t
 DccpHeader::Deserialize (Buffer::Iterator start)
 {
   Buffer::Iterator i = start;
+
   m_sourcePort = i.ReadNtohU16 ();
   m_destinationPort = i.ReadNtohU16 ();
 
   m_dataOffset = i.ReadU8();
   m_CCVal_CsCov = i.ReadU8();
 
-  m_checksum = i.ReadU8 ();
+  m_checksum = i.ReadU16 ();
 
   /*
   if (m_calcChecksum)
@@ -106,6 +106,20 @@ DccpHeader::Deserialize (Buffer::Iterator start)
 }
 
 //------------------------------------------------------------------------------Getters
+
+
+uint16_t
+DccpHeader::GetSourcePort () const
+{
+  return m_sourcePort;
+}
+
+uint16_t
+DccpHeader::GetDestinationPort () const
+{
+  return m_destinationPort;
+}
+
 uint8_t
 DccpHeader::GetDataOffset () const
 {
@@ -136,7 +150,7 @@ DccpHeader::GetType () const
   return (m_RTXRSn & 0x1e000000) >> 25;
 }
 
-bool
+uint8_t
 DccpHeader::GetX () const
 {
   return (m_RTXRSn & 0x01000000) >> 24;
@@ -145,13 +159,19 @@ DccpHeader::GetX () const
 uint8_t
 DccpHeader::GetReserved () const
 {
-  return (m_RTXRSn & 0x00ff0000) >> 16;
+  if (GetX())
+    return (m_RTXRSn & 0x00ff0000) >> 16;
+  else
+    return uint8_t(0);
 }
 
 SequenceNumber16
 DccpHeader::GetSequenceNumberHigh () const
 {
-  return SequenceNumber16(m_RTXRSn & 0x0000ffff);
+  if(GetX())
+    return SequenceNumber16(m_RTXRSn & 0x0000ffff);
+  else
+    return SequenceNumber16(0);
 }
 
 SequenceNumber32
@@ -203,7 +223,21 @@ DccpHeader::GetAcknowloedgeNumberLow () const
   }
 }
 
-//------------------------------------------------------------------------------Setters
+
+//-----------------------------------------------------------------------------Setters
+
+void
+DccpHeader::SetSourcePort (uint16_t SourcePort)
+{
+  m_sourcePort = SourcePort;
+}
+
+void
+DccpHeader::SetDestinationPort (uint16_t DestinationPort)
+{
+  m_destinationPort = DestinationPort;
+}
+
 void
 DccpHeader::SetDataOffset (uint8_t dataOffset)
 {
@@ -230,7 +264,7 @@ void
 DccpHeader::SetRes (uint8_t Res)
 {
   uint32_t temp = m_RTXRSn & 0x1fffffff;
-  m_RTXRSn = (Res & 0x0e) << 29;
+  m_RTXRSn = (Res & 0x07) << 29;
   m_RTXRSn |= temp;
 }
 
@@ -243,7 +277,7 @@ DccpHeader::SetType (uint8_t Type)
 }
 
 void
-DccpHeader::SetX (bool X)
+DccpHeader::SetX (uint8_t X)
 {
   uint32_t temp = m_RTXRSn & 0xfeffffff;
   m_RTXRSn = X << 24;
