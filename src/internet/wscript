@@ -208,6 +208,13 @@ def build(bld):
         'model/ripng-header.cc',
         'helper/ripng-helper.cc',
         'model/dccp-header.cc',
+        'model/dccp-option.cc',
+        'model/dccp-option-pad.cc',
+        'model/dccp-socket.cc',
+        'model/dccp-socket-impl.cc',
+        'model/dccp-socket-factory.cc',
+        'model/dccp-socket-factory-impl.cc',
+        'model/dccp-l4-protocol.cc',
         ]
 
     internet_test = bld.create_ns3_module_test_library('internet')
@@ -343,6 +350,13 @@ def build(bld):
         'model/ripng-header.h',
         'helper/ripng-helper.h',
         'model/dccp-header.h',
+        'model/dccp-option.h',
+        'model/dccp-option-pad.h',
+        'model/dccp-socket.h',
+        'model/dccp-socket-impl.h',
+        'model/dccp-socket-factory.h',
+        'model/dccp-socket-factory-impl.h',
+        'model/dccp-l4-protocol.h',
        ]
 
     if bld.env['NSC_ENABLED']:

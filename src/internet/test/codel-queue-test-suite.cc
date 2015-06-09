@@ -61,21 +61,6 @@ class CoDelQueueBasicEnqueueDequeue : public TestCase
 public:
   CoDelQueueBasicEnqueueDequeue (std::string mode);
   virtual void DoRun (void);
-
-  void QueueTestSize (Ptr<CoDelQueue> queue, uint32_t size, std::string error)
-  {
-    if (queue->GetMode () == CoDelQueue::QUEUE_MODE_BYTES)
-      {
-        NS_TEST_EXPECT_MSG_EQ (queue->GetNBytes (), size, error);
-      }
-    else if (queue->GetMode () == CoDelQueue::QUEUE_MODE_PACKETS)
-      {
-        NS_TEST_EXPECT_MSG_EQ (queue->GetNPackets (), size, error);
-      }
-
-    NS_TEST_EXPECT_MSG_EQ (queue->GetQueueSize (), size, error);
-  }
-
 private:
   StringValue m_mode;
 };
@@ -124,19 +109,19 @@ CoDelQueueBasicEnqueueDequeue::DoRun (void)
   p5 = Create<Packet> (pktSize);
   p6 = Create<Packet> (pktSize);
 
-  QueueTestSize (queue, 0 * modeSize, "There should be no packets in queue");
+  NS_TEST_EXPECT_MSG_EQ (queue->GetQueueSize (), 0 * modeSize, "There should be no packets in queue");
   queue->Enqueue (p1);
-  QueueTestSize (queue, 1 * modeSize, "There should be one packet in queue");
+  NS_TEST_EXPECT_MSG_EQ (queue->GetQueueSize (), 1 * modeSize, "There should be one packet in queue");
   queue->Enqueue (p2);
-  QueueTestSize (queue, 2 * modeSize, "There should be two packets in queue");
+  NS_TEST_EXPECT_MSG_EQ (queue->GetQueueSize (), 2 * modeSize, "There should be two packets in queue");
   queue->Enqueue (p3);
-  QueueTestSize (queue, 3 * modeSize, "There should be three packets in queue");
+  NS_TEST_EXPECT_MSG_EQ (queue->GetQueueSize (), 3 * modeSize, "There should be three packets in queue");
   queue->Enqueue (p4);
-  QueueTestSize (queue, 4 * modeSize, "There should be four packets in queue");
+  NS_TEST_EXPECT_MSG_EQ (queue->GetQueueSize (), 4 * modeSize, "There should be four packets in queue");
   queue->Enqueue (p5);
-  QueueTestSize (queue, 5 * modeSize, "There should be five packets in queue");
+  NS_TEST_EXPECT_MSG_EQ (queue->GetQueueSize (), 5 * modeSize, "There should be five packets in queue");
   queue->Enqueue (p6);
-  QueueTestSize (queue, 6 * modeSize, "There should be six packets in queue");
+  NS_TEST_EXPECT_MSG_EQ (queue->GetQueueSize (), 6 * modeSize, "There should be six packets in queue");
 
   NS_TEST_EXPECT_MSG_EQ (queue->GetDropOverLimit (), 0, "There should be no packets being dropped due to full queue");
 
@@ -144,32 +129,32 @@ CoDelQueueBasicEnqueueDequeue::DoRun (void)
 
   p = queue->Dequeue ();
   NS_TEST_EXPECT_MSG_EQ ((p != 0), true, "I want to remove the first packet");
-  QueueTestSize (queue, 5 * modeSize, "There should be five packets in queue");
+  NS_TEST_EXPECT_MSG_EQ (queue->GetQueueSize (), 5 * modeSize, "There should be five packets in queue");
   NS_TEST_EXPECT_MSG_EQ (p->GetUid (), p1->GetUid (), "was this the first packet ?");
 
   p = queue->Dequeue ();
   NS_TEST_EXPECT_MSG_EQ ((p != 0), true, "I want to remove the second packet");
-  QueueTestSize (queue, 4 * modeSize, "There should be four packets in queue");
+  NS_TEST_EXPECT_MSG_EQ (queue->GetQueueSize (), 4 * modeSize, "There should be four packets in queue");
   NS_TEST_EXPECT_MSG_EQ (p->GetUid (), p2->GetUid (), "Was this the second packet ?");
 
   p = queue->Dequeue ();
   NS_TEST_EXPECT_MSG_EQ ((p != 0), true, "I want to remove the third packet");
-  QueueTestSize (queue, 3 * modeSize, "There should be three packets in queue");
+  NS_TEST_EXPECT_MSG_EQ (queue->GetQueueSize (), 3 * modeSize, "There should be three packets in queue");
   NS_TEST_EXPECT_MSG_EQ (p->GetUid (), p3->GetUid (), "Was this the third packet ?");
 
   p = queue->Dequeue ();
   NS_TEST_EXPECT_MSG_EQ ((p != 0), true, "I want to remove the forth packet");
-  QueueTestSize (queue, 2 * modeSize, "There should be two packets in queue");
+  NS_TEST_EXPECT_MSG_EQ (queue->GetQueueSize (), 2 * modeSize, "There should be two packets in queue");
   NS_TEST_EXPECT_MSG_EQ (p->GetUid (), p4->GetUid (), "Was this the fourth packet ?");
 
   p = queue->Dequeue ();
   NS_TEST_EXPECT_MSG_EQ ((p != 0), true, "I want to remove the fifth packet");
-  QueueTestSize (queue, 1 * modeSize, "There should be one packet in queue");
+  NS_TEST_EXPECT_MSG_EQ (queue->GetQueueSize (), 1 * modeSize, "There should be one packet in queue");
   NS_TEST_EXPECT_MSG_EQ (p->GetUid (), p5->GetUid (), "Was this the fifth packet ?");
 
   p = queue->Dequeue ();
   NS_TEST_EXPECT_MSG_EQ ((p != 0), true, "I want to remove the last packet");
-  QueueTestSize (queue, 0 * modeSize, "There should be zero packet in queue");
+  NS_TEST_EXPECT_MSG_EQ (queue->GetQueueSize (), 0 * modeSize, "There should be zero packet in queue");
   NS_TEST_EXPECT_MSG_EQ (p->GetUid (), p6->GetUid (), "Was this the sixth packet ?");
 
   p = queue->Dequeue ();
@@ -184,21 +169,6 @@ class CoDelQueueBasicOverflow : public TestCase
 public:
   CoDelQueueBasicOverflow (std::string mode);
   virtual void DoRun (void);
-
-  void QueueTestSize (Ptr<CoDelQueue> queue, uint32_t size, std::string error)
-  {
-    if (queue->GetMode () == CoDelQueue::QUEUE_MODE_BYTES)
-      {
-        NS_TEST_EXPECT_MSG_EQ (queue->GetNBytes (), size, error);
-      }
-    else if (queue->GetMode () == CoDelQueue::QUEUE_MODE_PACKETS)
-      {
-        NS_TEST_EXPECT_MSG_EQ (queue->GetNPackets (), size, error);
-      }
-
-    NS_TEST_EXPECT_MSG_EQ (queue->GetQueueSize (), size, error);
-  }
-
 private:
   void Enqueue (Ptr<CoDelQueue> queue, uint32_t size, uint32_t nPkt);
   StringValue m_mode;
@@ -246,7 +216,7 @@ CoDelQueueBasicOverflow::DoRun (void)
   queue->Enqueue (p2);
   queue->Enqueue (p3);
 
-  QueueTestSize (queue, 500 * modeSize, "There should be 500 packets in queue");
+  NS_TEST_EXPECT_MSG_EQ (queue->GetQueueSize (), 500 * modeSize, "There should be 500 packets in queue");
   NS_TEST_EXPECT_MSG_EQ (queue->GetDropOverLimit (), 3, "There should be three packets being dropped due to full queue");
 }
 
@@ -351,21 +321,6 @@ class CoDelQueueBasicDrop : public TestCase
 public:
   CoDelQueueBasicDrop (std::string mode);
   virtual void DoRun (void);
-
-  void QueueTestSize (Ptr<CoDelQueue> queue, uint32_t size, std::string error)
-  {
-    if (queue->GetMode () == CoDelQueue::QUEUE_MODE_BYTES)
-      {
-        NS_TEST_EXPECT_MSG_EQ (queue->GetNBytes (), size, error);
-      }
-    else if (queue->GetMode () == CoDelQueue::QUEUE_MODE_PACKETS)
-      {
-        NS_TEST_EXPECT_MSG_EQ (queue->GetNPackets (), size, error);
-      }
-
-    NS_TEST_EXPECT_MSG_EQ (queue->GetQueueSize (), size, error);
-  }
-
 private:
   void Enqueue (Ptr<CoDelQueue> queue, uint32_t size, uint32_t nPkt);
   void Dequeue (Ptr<CoDelQueue> queue, uint32_t modeSize);
@@ -464,13 +419,13 @@ CoDelQueueBasicDrop::Dequeue (Ptr<CoDelQueue> queue, uint32_t modeSize)
               NS_TEST_EXPECT_MSG_EQ (currentDropCount, 0, "We are not in dropping state."
                                      "Sojourn time has just gone above target from below."
                                      "Hence, there should be no packet drops");
-              QueueTestSize (queue, initialQSize - modeSize, "There should be 1 packet dequeued.");
+              NS_TEST_EXPECT_MSG_EQ (queue->GetQueueSize (), initialQSize - modeSize, "There should be 1 packet dequeued.");
 
             }
           else if (currentTime >= queue->GetInterval ())
             {
               currentDropCount = queue->GetDropCount ();
-              QueueTestSize (queue, initialQSize - 2 * modeSize, "Sojourn time has been above target for at least interval."
+              NS_TEST_EXPECT_MSG_EQ (queue->GetQueueSize (), initialQSize - 2 * modeSize, "Sojourn time has been above target for at least interval."
                                      "We enter the dropping state, perform initial packet drop, and dequeue the next."
                                      "So there should be 2 more packets dequeued.");
               NS_TEST_EXPECT_MSG_EQ (currentDropCount, 1, "There should be 1 packet drop");
@@ -481,7 +436,7 @@ CoDelQueueBasicDrop::Dequeue (Ptr<CoDelQueue> queue, uint32_t modeSize)
           if (currentTime.GetMicroSeconds () < initialDropNext)
             {
               currentDropCount = queue->GetDropCount ();
-              QueueTestSize (queue, initialQSize - modeSize, "We are in dropping state."
+              NS_TEST_EXPECT_MSG_EQ (queue->GetQueueSize (), initialQSize - modeSize, "We are in dropping state."
                                      "Sojourn is still above target."
                                      "However, it's not time for next drop."
                                      "So there should be only 1 more packet dequeued");
@@ -491,7 +446,7 @@ CoDelQueueBasicDrop::Dequeue (Ptr<CoDelQueue> queue, uint32_t modeSize)
           else if (currentTime.GetMicroSeconds () >= initialDropNext)
             {
               currentDropCount = queue->GetDropCount ();
-              QueueTestSize (queue, initialQSize - (m_dropNextCount + 1) * modeSize, "We are in dropping state."
+              NS_TEST_EXPECT_MSG_EQ (queue->GetQueueSize (), initialQSize - (m_dropNextCount + 1) * modeSize, "We are in dropping state."
                                      "It's time for next drop."
                                      "The number of packets dequeued equals to the number of times m_dropNext is updated plus initial dequeue");
               NS_TEST_EXPECT_MSG_EQ (currentDropCount, 1 + m_dropNextCount, "The number of drops equals to the number of times m_dropNext is updated plus 1 from last dequeue");
