@@ -405,20 +405,7 @@ DccpL4Protocol::Send (Ptr<Packet> packet,
 {
   NS_LOG_FUNCTION (this << packet << saddr << daddr << sport << dport);
 
-  DccpHeader dccpHeader;
-  if(Node::ChecksumEnabled ())
-    {
-      dccpHeader.EnableChecksums ();
-      dccpHeader.InitializeChecksum (saddr,
-                                    daddr,
-                                    PROT_NUMBER);
-    }
-  dccpHeader.SetDestinationPort (dport);
-  dccpHeader.SetSourcePort (sport);
-
-  packet->AddHeader (dccpHeader);
-
-  m_downTarget (packet, saddr, daddr, PROT_NUMBER, 0);
+  Send (packet, saddr, daddr, sport, dport, 0);
 }
 
 void
@@ -451,20 +438,7 @@ DccpL4Protocol::Send (Ptr<Packet> packet,
 {
   NS_LOG_FUNCTION (this << packet << saddr << daddr << sport << dport);
 
-  DccpHeader dccpHeader;
-  if(Node::ChecksumEnabled ())
-    {
-      dccpHeader.EnableChecksums ();
-      dccpHeader.InitializeChecksum (saddr,
-                                    daddr,
-                                    PROT_NUMBER);
-    }
-  dccpHeader.SetDestinationPort (dport);
-  dccpHeader.SetSourcePort (sport);
-
-  packet->AddHeader (dccpHeader);
-
-  m_downTarget6 (packet, saddr, daddr, PROT_NUMBER, 0);
+  Send (packet, saddr, daddr, sport, dport, 0);
 }
 
 void
