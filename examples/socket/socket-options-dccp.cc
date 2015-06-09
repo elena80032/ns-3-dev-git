@@ -55,7 +55,12 @@ static void SendPacket (Ptr<Socket> socket, uint32_t pktSize,
 {
   if (pktCount > 0)
     {
-      socket->Send (Create<Packet> (pktSize));
+      int res = socket->Send (Create<Packet> (pktSize));
+
+      if (res < 0)
+        {
+          NS_FATAL_ERROR ("Error " << res << " trying to send a packet");
+        }
       Simulator::Schedule (pktInterval, &SendPacket, 
                            socket, pktSize,pktCount - 1, pktInterval);
     }
@@ -97,6 +102,8 @@ main (int argc, char *argv[])
   n.Create (2);
 
   InternetStackHelper internet;
+
+  internet.SetTcp ("ns3::DccpL4Protocol");
   internet.Install (n);
 
   Address serverAddress;
@@ -120,11 +127,13 @@ main (int argc, char *argv[])
   TypeId tid = TypeId::LookupByName ("ns3::DccpSocketFactory");
 
   Ptr<Socket> recvSink = Socket::CreateSocket (n.Get (1), tid);
-  std::cout<< "ci arrivo??" << std::endl;
+
   InetSocketAddress local = InetSocketAddress (Ipv4Address::GetAny (), 4477);
   recvSink->SetIpRecvTos (ipRecvTos);
   recvSink->SetIpRecvTtl (ipRecvTtl);
   recvSink->Bind (local);
+  recvSink->Listen ();
+  recvSink->ShutdownSend ();
   recvSink->SetRecvCallback (MakeCallback (&ReceivePacket));
 
   //Sender socket on n0
