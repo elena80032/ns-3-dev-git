@@ -308,10 +308,7 @@ DccpL4Protocol::Receive (Ptr<Packet> packet,
 {
   NS_LOG_FUNCTION (this << packet << header);
   DccpHeader dccpHeader;
-  if(Node::ChecksumEnabled ())
-    {
-      dccpHeader.EnableChecksums ();
-    }
+  dccpHeader.EnableChecksums ();
 
   dccpHeader.InitializeChecksum (header.GetSource (), header.GetDestination (), PROT_NUMBER);
 
@@ -367,10 +364,7 @@ DccpL4Protocol::Receive (Ptr<Packet> packet,
 {
   NS_LOG_FUNCTION (this << packet << header.GetSourceAddress () << header.GetDestinationAddress ());
   DccpHeader dccpHeader;
-  if(Node::ChecksumEnabled ())
-    {
-      dccpHeader.EnableChecksums ();
-    }
+  dccpHeader.EnableChecksums ();
 
   dccpHeader.InitializeChecksum (header.GetSourceAddress (), header.GetDestinationAddress (), PROT_NUMBER);
 
@@ -414,13 +408,11 @@ DccpL4Protocol::Send (Ptr<Packet> packet,
                      uint16_t sport, uint16_t dport, Ptr<Ipv4Route> route, DccpHeader &h)
 {
   NS_LOG_FUNCTION (this << packet << saddr << daddr << sport << dport << route);
-  if(Node::ChecksumEnabled ())
-    {
-      h.EnableChecksums ();
-      h.InitializeChecksum (saddr,
-                                    daddr,
-                                    PROT_NUMBER);
-    }
+
+  h.EnableChecksums ();
+  h.InitializeChecksum (saddr,
+                        daddr,
+                        PROT_NUMBER);
   h.SetDestinationPort (dport);
   h.SetSourcePort (sport);
   packet->AddHeader (h);
@@ -444,13 +436,10 @@ DccpL4Protocol::Send (Ptr<Packet> packet,
 {
   NS_LOG_FUNCTION (this << packet << saddr << daddr << sport << dport << route);
 
-  if(Node::ChecksumEnabled ())
-    {
-      h.EnableChecksums ();
-      h.InitializeChecksum (saddr,
-                            daddr,
-                            PROT_NUMBER);
-    }
+  h.EnableChecksums ();
+  h.InitializeChecksum (saddr,
+                        daddr,
+                        PROT_NUMBER);
   h.SetDestinationPort (dport);
   h.SetSourcePort (sport);
 

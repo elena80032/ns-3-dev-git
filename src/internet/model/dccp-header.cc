@@ -73,7 +73,6 @@ DccpHeader::Serialize (Buffer::Iterator start) const
   i.WriteU8(m_dataOffset);
   i.WriteU8(m_CCVal_CsCov);
 
-
   i.WriteU16 (0); //checksum disabled
 
   i.WriteHtonU32(m_RTXRSn);
@@ -114,14 +113,12 @@ DccpHeader::Serialize (Buffer::Iterator start) const
       }
   }
 
-  /*
   uint16_t headerChecksum = CalculateHeaderChecksum (start.GetSize ());
   i = start;
   uint16_t checksum = i.CalculateIpChecksum (start.GetSize (), headerChecksum);
   i = start;
   i.Next (6);
   i.WriteU16 (checksum);
-  */
 }
 
 uint32_t
@@ -190,12 +187,10 @@ DccpHeader::Deserialize (Buffer::Iterator start)
         }
     }
 
-  /*
    uint16_t headerChecksum = CalculateHeaderChecksum (start.GetSize ());
    i = start;
    uint16_t checksum = i.CalculateIpChecksum (start.GetSize (), headerChecksum);
    m_goodchecksum = (checksum == m_checksum);
-  */
 
   return GetSerializedSize () ;
 }
@@ -204,7 +199,6 @@ uint16_t
 DccpHeader::CalculateHeaderChecksum (uint16_t size) const
 {
   /* Buffer size must be at least as large as the largest IP pseudo-header */
-  /* [per RFC2460, but without consideration for IPv6 extension hdrs]      */
   /* Src address            16 bytes (more generally, Address::MAX_SIZE)   */
   /* Dst address            16 bytes (more generally, Address::MAX_SIZE)   */
   /* Upper layer pkt len    4 bytes                                        */
@@ -269,6 +263,7 @@ DccpHeader::InitializeChecksum (Ipv6Address source,
   m_destination = destination;
   m_protocol = protocol;
 }
+
 //------------------------------------------------------------------------------Getters
 
 uint8_t
