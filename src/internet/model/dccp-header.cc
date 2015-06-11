@@ -190,7 +190,7 @@ DccpHeader::Deserialize (Buffer::Iterator start)
    uint16_t headerChecksum = CalculateHeaderChecksum (start.GetSize ());
    i = start;
    uint16_t checksum = i.CalculateIpChecksum (start.GetSize (), headerChecksum);
-   m_goodchecksum = (checksum == m_checksum);
+   m_goodchecksum = (checksum == 0);
 
   return GetSerializedSize () ;
 }
