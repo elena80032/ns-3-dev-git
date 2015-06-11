@@ -68,10 +68,22 @@ DccpSocketImpl::~DccpSocketImpl ()
   NS_LOG_FUNCTION_NOARGS ();
 
   m_node = 0;
-
+  /**
+  * Note: actually this function is called AFTER
+  * DccpSocketImpl::Destroy
+  * so the code below is unnecessary in normal operations
+  */
   if (m_endPoint != 0)
     {
       NS_ASSERT (m_dccp != 0);
+      /**
+      * Note that this piece of code is a bit tricky:
+      * when DeAllocate is called, it will call into
+      * Ipv4EndPointDemux::Deallocate which triggers
+      * a delete of the associated endPoint which triggers
+      * in turn a call to the method DccpSocketImpl::Destroy below
+      * will will zero the m_endPoint field.
+      */
       NS_ASSERT (m_endPoint != 0);
       m_dccp->DeAllocate (m_endPoint);
       NS_ASSERT (m_endPoint == 0);
@@ -366,7 +378,15 @@ DccpSocketImpl::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port)
     }
 
   Ptr<Ipv4> ipv4 = m_node->GetObject<Ipv4> ();
-
+    
+  // Locally override the IP TTL for this socket
+  // We cannot directly modify the TTL at this stage, so we set a Packet tag
+  // The destination can be either multicast, unicast/anycast, or
+  // either all-hosts broadcast or limited (subnet-directed) broadcast.
+  // For the latter two broadcast types, the TTL will later be set to one
+  // irrespective of what is set in these socket options.  So, this tagging
+  // may end up setting the TTL of a limited broadcast packet to be
+  // the same as a unicast, but it will be fixed further down the stack
   DccpHeader dccpHeader;
 
   if (m_endPoint->GetLocalAddress () != Ipv4Address::GetAny ())
@@ -383,24 +403,6 @@ DccpSocketImpl::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port)
       dccpHeader.SetSequenceNumberLow(SequenceNumber32(33));
       dccpHeader.SetSequenceNumberHigh(SequenceNumber16(0));
       dccpHeader.SetServiceCode (11111111);
-
-
-
-/*
-      void SetDataOffset (uint8_t dataOffset);
-      void SetCCVal (uint8_t CCVal);
-      void SetCsCov (uint8_t CsCov);
-      void SetRes (uint8_t Res);
-      void SetType (uint8_t Type);
-      void SetX (uint8_t  X);
-      void SetReserved (uint8_t Reserved);
-      void SetSequenceNumberHigh (SequenceNumber16 SequenceNumberHigh);
-      void SetSequenceNumberLow (SequenceNumber32 SequenceNumberLow);
-      void SetReservedAck (uint16_t ReservedAck);
-      void SetAcknowloedgeNumberHigh (SequenceNumber16 AcknowloedgeNumberHigh);
-      void SetAcknowloedgeNumberLow (SequenceNumber32 AcknowloedgeNumberLow);
-      void SetServiceCode (uint32_t ServiceCode);
-      void SetResetCode (uint8_t ResetCode);*/
 
 
       m_dccp->Send (p->Copy (), m_endPoint->GetLocalAddress (), dest, m_endPoint->GetLocalPort (), port, 0,dccpHeader);
@@ -469,7 +471,10 @@ DccpSocketImpl::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port)
   return 0;
 }
 
-
+    
+// maximum message size for UDP broadcast is limited by MTU
+// size of underlying link; we are not checking that now.
+// \todo Check MTU size of underlying link
 uint32_t
 DccpSocketImpl::GetTxAvailable (void) const
 {

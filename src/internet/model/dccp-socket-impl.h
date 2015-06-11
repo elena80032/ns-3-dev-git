@@ -21,16 +21,34 @@ class Packet;
 class DccpL4Protocol;
 class DccpHeader;
 
+/**
+* \ingroup dccp
+* \brief A sockets interface to DCCP
+*
+* This class subclasses ns3::DccpSocket, and provides a socket interface
+* to ns3's implementation of DCCP.
+*/
 class DccpSocketImpl : public DccpSocket
 {
 public:
-
+  /**
+  * \brief Get the type ID.
+  * \return the object TypeId
+  */
   static TypeId GetTypeId (void);
+  /**
+  * Create an unbound dccp socket.
+  */
   DccpSocketImpl ();
   virtual ~DccpSocketImpl ();
 
   void SetNode (Ptr<Node> node);
 
+  /**
+  * \brief Set the associated DCCP L4 protocol.
+  * \param udp the DCCP L4 protocol
+  */
+  
   void SetDccp (Ptr<DccpL4Protocol> dccp);
 
   virtual enum SocketErrno GetErrno (void) const;
@@ -55,6 +73,7 @@ public:
   virtual uint32_t GetRxAvailable (void) const;
   virtual bool SetAllowBroadcast (bool allowBroadcast);
   virtual bool GetAllowBroadcast () const;
+    
 private:
   // Attributes set through UdpSocket base class
   virtual void SetRcvBufSize (uint32_t size);
@@ -63,18 +82,56 @@ private:
   virtual bool GetMtuDiscover (void) const;
 
   friend class DccpSocketFactory;
-
+    
+  // invoked by Dccp class
+    
+  /**
+  * Finish the binding process
+  * \returns 0 on success, -1 on failure
+  */
   int FinishBind (void);
+    
+  /**
+  * \brief Kill this socket by zeroing its attributes (IPv4)
+  *
+  * This is a callback function configured to m_endpoint in
+  * SetupCallback(), invoked when the endpoint is destroyed.
+  */
   void Destroy (void);
+    
+  /**
+  * \brief Deallocate m_endPoint and m_endPoint6
+  */
   void DeallocateEndPoint (void);
+    
+  /**
+  * \brief Send a packet
+  * \param p packet
+  * \returns 0 on success, -1 on failure
+  */
   int DoSend (Ptr<Packet> p);
+  
+  /**
+  * \brief Send a packet to a specific destination
+  * \param p packet
+  * \param daddr destination address
+  * \returns 0 on success, -1 on failure
+  */
   int DoSendTo (Ptr<Packet> p, const Address &daddr);
+    
+  /**
+  * \brief Send a packet to a specific destination and port (IPv4)
+  * \param p packet
+  * \param daddr destination address
+  * \param dport destination port
+  * \returns 0 on success, -1 on failure
+  */
   int DoSendTo (Ptr<Packet> p, Ipv4Address daddr, uint16_t dport);
 
   // Connections to other layers of TCP/IP
   Ipv4EndPoint*       m_endPoint;   //!< the IPv4 endpoint
   Ptr<Node>           m_node;       //!< the associated node
-  Ptr<DccpL4Protocol> m_dccp;         //!< the associated UDP L4 protocol
+  Ptr<DccpL4Protocol> m_dccp;         //!< the associated DCCP L4 protocol
 
 
   Address m_defaultAddress; //!< Default address
