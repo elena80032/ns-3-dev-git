@@ -1,23 +1,3 @@
-/* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/*
- * Copyright (c) 2005,2006,2007 INRIA
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation;
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * Author: Mathieu Lacage <mathieu.lacage@sophia.inria.fr>
- */
-
 #ifndef DCCP_L4_PROTOCOL_H
 #define DCCP_L4_PROTOCOL_H
 
@@ -149,7 +129,7 @@ public:
    */
   void DeAllocate (Ipv6EndPoint *endPoint);
 
-  // called by DccSocket.
+  // called by DccpSocket.
   /**
    * \brief Send a packet via DCCP (IPv4)
    * \param packet The packet to send
@@ -158,8 +138,6 @@ public:
    * \param sport The source port number
    * \param dport The destination port number
    */
-
-
   void Send (Ptr<Packet> packet,
              Ipv4Address saddr, Ipv4Address daddr, 
              uint16_t sport, uint16_t dport, DccpHeader &h);
@@ -206,7 +184,6 @@ public:
   virtual enum IpL4Protocol::RxStatus Receive (Ptr<Packet> p,
                                                Ipv6Header const &header,
                                                Ptr<Ipv6Interface> interface);
-
   virtual void ReceiveIcmp (Ipv4Address icmpSource, uint8_t icmpTtl,
                             uint8_t icmpType, uint8_t icmpCode, uint32_t icmpInfo,
                             Ipv4Address payloadSource,Ipv4Address payloadDestination,
@@ -250,6 +227,7 @@ private:
    */
   DccpL4Protocol &operator = (const DccpL4Protocol &);
 
+  // We manage only one socket
   Ptr<DccpSocketImpl>  m_socket;                        //!<socket
   IpL4Protocol::DownTargetCallback m_downTarget;        //!< Callback to send packets over IPv4
   IpL4Protocol::DownTargetCallback6 m_downTarget6;      //!< Callback to send packets over IPv6

@@ -57,6 +57,7 @@ DccpOptionPadding::GetSerializedSize (void) const
 void
 DccpOptionPadding::Serialize (Buffer::Iterator i) const
 {
+  // Write 00000000
   i.WriteU8 (GetKind ());
 }
 

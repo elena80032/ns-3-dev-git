@@ -9,15 +9,29 @@
 
 namespace ns3{
 
+  /**
+   * \brief Defines the DCCP option of type 0 (padding option) as in \RFC{4340}
+   */
+
 class DccpOptionPadding : public DccpOption
 {
   public:
 
     DccpOptionPadding ();
     virtual ~DccpOptionPadding ();
+    /**
+     * \brief Get the type ID.
+     * \return the object TypeId
+     */
     static TypeId GetTypeId (void);
     virtual TypeId GetInstanceTypeId (void) const;
+
+    /**
+     * \brief Get the option type
+     * \return The scale value
+     */
     virtual uint8_t GetKind (void) const;
+
     virtual void Print (std::ostream &os) const;
     virtual void Serialize (Buffer::Iterator start) const;
     virtual uint32_t Deserialize (Buffer::Iterator start);

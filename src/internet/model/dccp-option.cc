@@ -35,33 +35,36 @@ DccpOption::GetInstanceTypeId (void) const
   return GetTypeId ();
 }
 
+/*
+ * Create a new option with the given type
+ */
 Ptr<DccpOption>
 DccpOption::CreateOption (uint8_t kind)
 {
-    struct kindToTid
+  struct kindToTid
+  {
+    DccpOption::Kind kind;
+    TypeId tid;
+  };
+
+  static ObjectFactory objectFactory;
+  static kindToTid toTid[] =
+  {
+    { DccpOption::PADDING,  DccpOptionPadding::GetTypeId () },
+    { DccpOption::UNKNOWN,  DccpOptionUnknown::GetTypeId () }
+  };
+
+  for (unsigned int i = 0; i < sizeof (toTid) / sizeof (kindToTid); ++i)
     {
-      DccpOption::Kind kind;
-      TypeId tid;
-    };
+      if (toTid[i].kind == kind)
+        {
+          objectFactory.SetTypeId (toTid[i].tid);
+          return objectFactory.Create<DccpOption> ();
+        }
+    }
 
-    static ObjectFactory objectFactory;
-    static kindToTid toTid[] =
-    {
-      { DccpOption::PADDING,  DccpOptionPadding::GetTypeId () },
-      { DccpOption::UNKNOWN,  DccpOptionUnknown::GetTypeId () }
-    };
-
-    for (unsigned int i = 0; i < sizeof (toTid) / sizeof (kindToTid); ++i)
-      {
-        if (toTid[i].kind == kind)
-          {
-            objectFactory.SetTypeId (toTid[i].tid);
-            return objectFactory.Create<DccpOption> ();
-          }
-      }
-
-    return CreateObject<DccpOptionUnknown> ();
-  }
+  return CreateObject<DccpOptionUnknown> ();
+}
 
 
 bool
@@ -76,7 +79,9 @@ DccpOption::IsKindKnown (uint8_t kind)
   return false;
 }
 
-
+/*
+ * A general Dccp Option
+ */
 NS_OBJECT_ENSURE_REGISTERED (DccpOptionUnknown);
 
 DccpOptionUnknown::DccpOptionUnknown ()
