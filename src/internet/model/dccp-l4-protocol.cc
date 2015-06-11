@@ -39,6 +39,7 @@
 #include "ipv4-l3-protocol.h"
 #include "ipv6-l3-protocol.h"
 #include "dccp-socket-impl.h"
+#include "dccp-header.h"
 
 namespace ns3 {
 
@@ -401,17 +402,17 @@ DccpL4Protocol::Receive (Ptr<Packet> packet,
 void
 DccpL4Protocol::Send (Ptr<Packet> packet, 
                      Ipv4Address saddr, Ipv4Address daddr, 
-                     uint16_t sport, uint16_t dport)
+                     uint16_t sport, uint16_t dport,const DccpHeader &h)
 {
   NS_LOG_FUNCTION (this << packet << saddr << daddr << sport << dport);
 
-  Send (packet, saddr, daddr, sport, dport, 0);
+  Send (packet, saddr, daddr, sport, dport, 0, h);
 }
 
 void
 DccpL4Protocol::Send (Ptr<Packet> packet, 
                      Ipv4Address saddr, Ipv4Address daddr, 
-                     uint16_t sport, uint16_t dport, Ptr<Ipv4Route> route)
+                     uint16_t sport, uint16_t dport, Ptr<Ipv4Route> route, const DccpHeader &h)
 {
   NS_LOG_FUNCTION (this << packet << saddr << daddr << sport << dport << route);
 
@@ -434,17 +435,17 @@ DccpL4Protocol::Send (Ptr<Packet> packet,
 void
 DccpL4Protocol::Send (Ptr<Packet> packet,
                      Ipv6Address saddr, Ipv6Address daddr,
-                     uint16_t sport, uint16_t dport)
+                     uint16_t sport, uint16_t dport,const DccpHeader &h)
 {
   NS_LOG_FUNCTION (this << packet << saddr << daddr << sport << dport);
 
-  Send (packet, saddr, daddr, sport, dport, 0);
+  Send (packet, saddr, daddr, sport, dport, 0, h);
 }
 
 void
 DccpL4Protocol::Send (Ptr<Packet> packet,
                      Ipv6Address saddr, Ipv6Address daddr,
-                     uint16_t sport, uint16_t dport, Ptr<Ipv6Route> route)
+                     uint16_t sport, uint16_t dport, Ptr<Ipv6Route> route, const DccpHeader &h)
 {
   NS_LOG_FUNCTION (this << packet << saddr << daddr << sport << dport << route);
 

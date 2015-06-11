@@ -19,6 +19,7 @@
 #include "dccp-l4-protocol.h"
 #include "ipv4-end-point.h"
 #include "dccp-socket.h"
+#include "dccp-header.h"
 #include <limits>
 
 namespace ns3 {
@@ -366,10 +367,43 @@ DccpSocketImpl::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port)
 
   Ptr<Ipv4> ipv4 = m_node->GetObject<Ipv4> ();
 
+  DccpHeader dccpHeader;
+
   if (m_endPoint->GetLocalAddress () != Ipv4Address::GetAny ())
     {
-      m_dccp->Send (p->Copy (), m_endPoint->GetLocalAddress (), dest,
-                   m_endPoint->GetLocalPort (), port, 0);
+      //*------------------------------------------------------------------------------------------------------------------------------SEND
+      dccpHeader.SetSourcePort(m_endPoint->GetLocalPort ());
+      dccpHeader.SetDestinationPort(port);
+      dccpHeader.SetDataOffset(uint8_t(4));
+      dccpHeader.SetCCVal(0);
+      dccpHeader.SetCsCov(0);
+      dccpHeader.SetRes(0);
+      dccpHeader.SetType(0);
+      dccpHeader.SetX(1);
+      dccpHeader.SetSequenceNumberLow(SequenceNumber32(33));
+      dccpHeader.SetSequenceNumberHigh(SequenceNumber16(0));
+      dccpHeader.SetServiceCode (11111111);
+
+
+
+/*
+      void SetDataOffset (uint8_t dataOffset);
+      void SetCCVal (uint8_t CCVal);
+      void SetCsCov (uint8_t CsCov);
+      void SetRes (uint8_t Res);
+      void SetType (uint8_t Type);
+      void SetX (uint8_t  X);
+      void SetReserved (uint8_t Reserved);
+      void SetSequenceNumberHigh (SequenceNumber16 SequenceNumberHigh);
+      void SetSequenceNumberLow (SequenceNumber32 SequenceNumberLow);
+      void SetReservedAck (uint16_t ReservedAck);
+      void SetAcknowloedgeNumberHigh (SequenceNumber16 AcknowloedgeNumberHigh);
+      void SetAcknowloedgeNumberLow (SequenceNumber32 AcknowloedgeNumberLow);
+      void SetServiceCode (uint32_t ServiceCode);
+      void SetResetCode (uint8_t ResetCode);*/
+
+
+      m_dccp->Send (p->Copy (), m_endPoint->GetLocalAddress (), dest, m_endPoint->GetLocalPort (), port, 0,dccpHeader);
       NotifyDataSent (p->GetSize ());
       NotifySend (GetTxAvailable ());
       return p->GetSize ();
@@ -401,8 +435,19 @@ DccpSocketImpl::DoSendTo (Ptr<Packet> p, Ipv4Address dest, uint16_t port)
                 }
 
           header.SetSource (route->GetSource ());
-          m_dccp->Send (p->Copy (), header.GetSource (), header.GetDestination (),
-                       m_endPoint->GetLocalPort (), port, route);
+          //*------------------------------------------------------------------------------------------------------------------------------SEND
+          dccpHeader.SetSourcePort(m_endPoint->GetLocalPort ());
+          dccpHeader.SetDestinationPort(port);
+          dccpHeader.SetDataOffset(4);
+          dccpHeader.SetCCVal(0);
+          dccpHeader.SetCsCov(0);
+          dccpHeader.SetRes(0);
+          dccpHeader.SetType(0);
+          dccpHeader.SetX(1);
+          dccpHeader.SetSequenceNumberLow(SequenceNumber32(33));
+          dccpHeader.SetSequenceNumberHigh(SequenceNumber16(0));
+          dccpHeader.SetServiceCode (11111111);
+          m_dccp->Send (p->Copy (), header.GetSource (), header.GetDestination (), m_endPoint->GetLocalPort (), port, route,dccpHeader);
           NotifyDataSent (p->GetSize ());
           return p->GetSize ();
         }

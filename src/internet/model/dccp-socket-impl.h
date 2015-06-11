@@ -19,6 +19,7 @@ class Ipv6EndPoint;
 class Node;
 class Packet;
 class DccpL4Protocol;
+class DccpHeader;
 
 class DccpSocketImpl : public DccpSocket
 {

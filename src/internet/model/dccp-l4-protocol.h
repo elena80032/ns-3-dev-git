@@ -40,6 +40,7 @@ class Ipv4EndPoint;
 class Ipv6EndPointDemux;
 class Ipv6EndPoint;
 class DccpSocketImpl;
+class DccpHeader;
 
 class DccpL4Protocol : public IpL4Protocol {
 public:
@@ -157,9 +158,11 @@ public:
    * \param sport The source port number
    * \param dport The destination port number
    */
+
+
   void Send (Ptr<Packet> packet,
              Ipv4Address saddr, Ipv4Address daddr, 
-             uint16_t sport, uint16_t dport);
+             uint16_t sport, uint16_t dport, const DccpHeader &h);
   /**
    * \brief Send a packet via DCCP (IPv4)
    * \param packet The packet to send
@@ -171,7 +174,7 @@ public:
    */
   void Send (Ptr<Packet> packet,
              Ipv4Address saddr, Ipv4Address daddr, 
-             uint16_t sport, uint16_t dport, Ptr<Ipv4Route> route);
+             uint16_t sport, uint16_t dport, Ptr<Ipv4Route> route, const DccpHeader &h);
   /**
    * \brief Send a packet via DCCP (IPv6)
    * \param packet The packet to send
@@ -182,7 +185,7 @@ public:
    */
   void Send (Ptr<Packet> packet,
              Ipv6Address saddr, Ipv6Address daddr, 
-             uint16_t sport, uint16_t dport);
+             uint16_t sport, uint16_t dport, const DccpHeader &h);
   /**
    * \brief Send a packet via DCCP (IPv6)
    * \param packet The packet to send
@@ -194,7 +197,7 @@ public:
    */
   void Send (Ptr<Packet> packet,
              Ipv6Address saddr, Ipv6Address daddr, 
-             uint16_t sport, uint16_t dport, Ptr<Ipv6Route> route);
+             uint16_t sport, uint16_t dport, Ptr<Ipv6Route> route,const DccpHeader &h);
 
   // inherited from Ipv4L4Protocol
   virtual enum IpL4Protocol::RxStatus Receive (Ptr<Packet> p,
