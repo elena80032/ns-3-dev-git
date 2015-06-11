@@ -23,7 +23,6 @@ DccpSocketFactoryImpl::SetDccp (Ptr<DccpL4Protocol> dccp)
 Ptr<Socket>
 DccpSocketFactoryImpl::CreateSocket (void)
 {
-  std::cout<< "mi chiami? create socket dccpSKTfactoryimpl" <<std::endl;
   return m_dccp->CreateSocket ();
 }
 
