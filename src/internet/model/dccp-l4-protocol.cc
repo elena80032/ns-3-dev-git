@@ -402,32 +402,28 @@ DccpL4Protocol::Receive (Ptr<Packet> packet,
 void
 DccpL4Protocol::Send (Ptr<Packet> packet, 
                      Ipv4Address saddr, Ipv4Address daddr, 
-                     uint16_t sport, uint16_t dport,const DccpHeader &h)
+                     uint16_t sport, uint16_t dport,DccpHeader &h)
 {
   NS_LOG_FUNCTION (this << packet << saddr << daddr << sport << dport);
-
   Send (packet, saddr, daddr, sport, dport, 0, h);
 }
 
 void
 DccpL4Protocol::Send (Ptr<Packet> packet, 
                      Ipv4Address saddr, Ipv4Address daddr, 
-                     uint16_t sport, uint16_t dport, Ptr<Ipv4Route> route, const DccpHeader &h)
+                     uint16_t sport, uint16_t dport, Ptr<Ipv4Route> route, DccpHeader &h)
 {
   NS_LOG_FUNCTION (this << packet << saddr << daddr << sport << dport << route);
-
-  DccpHeader dccpHeader;
   if(Node::ChecksumEnabled ())
     {
-      dccpHeader.EnableChecksums ();
-      dccpHeader.InitializeChecksum (saddr,
+      h.EnableChecksums ();
+      h.InitializeChecksum (saddr,
                                     daddr,
                                     PROT_NUMBER);
     }
-  dccpHeader.SetDestinationPort (dport);
-  dccpHeader.SetSourcePort (sport);
-
-  packet->AddHeader (dccpHeader);
+  h.SetDestinationPort (dport);
+  h.SetSourcePort (sport);
+  packet->AddHeader (h);
 
   m_downTarget (packet, saddr, daddr, PROT_NUMBER, route);
 }
@@ -435,32 +431,30 @@ DccpL4Protocol::Send (Ptr<Packet> packet,
 void
 DccpL4Protocol::Send (Ptr<Packet> packet,
                      Ipv6Address saddr, Ipv6Address daddr,
-                     uint16_t sport, uint16_t dport,const DccpHeader &h)
+                     uint16_t sport, uint16_t dport, DccpHeader &h)
 {
   NS_LOG_FUNCTION (this << packet << saddr << daddr << sport << dport);
-
   Send (packet, saddr, daddr, sport, dport, 0, h);
 }
 
 void
 DccpL4Protocol::Send (Ptr<Packet> packet,
                      Ipv6Address saddr, Ipv6Address daddr,
-                     uint16_t sport, uint16_t dport, Ptr<Ipv6Route> route, const DccpHeader &h)
+                     uint16_t sport, uint16_t dport, Ptr<Ipv6Route> route, DccpHeader &h)
 {
   NS_LOG_FUNCTION (this << packet << saddr << daddr << sport << dport << route);
 
-  DccpHeader dccpHeader;
   if(Node::ChecksumEnabled ())
     {
-      dccpHeader.EnableChecksums ();
-      dccpHeader.InitializeChecksum (saddr,
-                                    daddr,
-                                    PROT_NUMBER);
+      h.EnableChecksums ();
+      h.InitializeChecksum (saddr,
+                            daddr,
+                            PROT_NUMBER);
     }
-  dccpHeader.SetDestinationPort (dport);
-  dccpHeader.SetSourcePort (sport);
+  h.SetDestinationPort (dport);
+  h.SetSourcePort (sport);
 
-  packet->AddHeader (dccpHeader);
+  packet->AddHeader (h);
 
   m_downTarget6 (packet, saddr, daddr, PROT_NUMBER, route);
 }

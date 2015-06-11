@@ -162,7 +162,7 @@ public:
 
   void Send (Ptr<Packet> packet,
              Ipv4Address saddr, Ipv4Address daddr, 
-             uint16_t sport, uint16_t dport, const DccpHeader &h);
+             uint16_t sport, uint16_t dport, DccpHeader &h);
   /**
    * \brief Send a packet via DCCP (IPv4)
    * \param packet The packet to send
@@ -174,7 +174,7 @@ public:
    */
   void Send (Ptr<Packet> packet,
              Ipv4Address saddr, Ipv4Address daddr, 
-             uint16_t sport, uint16_t dport, Ptr<Ipv4Route> route, const DccpHeader &h);
+             uint16_t sport, uint16_t dport, Ptr<Ipv4Route> route, DccpHeader &h);
   /**
    * \brief Send a packet via DCCP (IPv6)
    * \param packet The packet to send
@@ -185,7 +185,7 @@ public:
    */
   void Send (Ptr<Packet> packet,
              Ipv6Address saddr, Ipv6Address daddr, 
-             uint16_t sport, uint16_t dport, const DccpHeader &h);
+             uint16_t sport, uint16_t dport, DccpHeader &h);
   /**
    * \brief Send a packet via DCCP (IPv6)
    * \param packet The packet to send
@@ -197,7 +197,7 @@ public:
    */
   void Send (Ptr<Packet> packet,
              Ipv6Address saddr, Ipv6Address daddr, 
-             uint16_t sport, uint16_t dport, Ptr<Ipv6Route> route,const DccpHeader &h);
+             uint16_t sport, uint16_t dport, Ptr<Ipv6Route> route, DccpHeader &h);
 
   // inherited from Ipv4L4Protocol
   virtual enum IpL4Protocol::RxStatus Receive (Ptr<Packet> p,
