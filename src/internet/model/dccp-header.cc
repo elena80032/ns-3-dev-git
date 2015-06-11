@@ -32,7 +32,6 @@ DccpHeader::~DccpHeader ()
 {
 }
 
-//-----------------------------------------------------------------------------Serialize
 uint32_t
 DccpHeader::GetSerializedSize (void) const
 {
@@ -264,7 +263,6 @@ DccpHeader::InitializeChecksum (Ipv6Address source,
   m_protocol = protocol;
 }
 
-//------------------------------------------------------------------------------Getters
 
 uint8_t
 DccpHeader::GetDataOffset () const
@@ -451,7 +449,6 @@ DccpHeader::GetData3() const
    }
 }
 
-//-----------------------------------------------------------------------------Setters
 
 void
 DccpHeader::SetDataOffset (uint8_t dataOffset)
