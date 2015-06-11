@@ -101,6 +101,8 @@ main (int argc, char *argv[])
   NodeContainer n;
   n.Create (2);
 
+  GlobalValue::Bind ("ChecksumEnabled", BooleanValue (true));
+
   InternetStackHelper internet;
 
   internet.SetTcp ("ns3::DccpL4Protocol");
